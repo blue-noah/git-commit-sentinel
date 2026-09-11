@@ -5,7 +5,7 @@
   "description": "One hook invocation, as queued locally and delivered by a Sink (see docs/adr/0005-async-usage-telemetry.md). Never contains commit message content.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "ts", "actor", "repo", "result", "tool"],
+  "required": ["schema_version", "ts", "actor", "repo", "result", "tool", "environment"],
   "properties": {
     "schema_version": {
       "type": "integer",
@@ -76,6 +76,18 @@
       "properties": {
         "name": { "type": "string", "const": "git-commit-sentinel" },
         "version": { "type": "string", "minLength": 1 }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["git_version"],
+      "properties": {
+        "git_version": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Output of `git --version` on the workstation, e.g. \"2.43.0\" — as reported by gitcli.DetectVersion(), not the tool's own version (see tool.version)."
+        }
       }
     }
   }

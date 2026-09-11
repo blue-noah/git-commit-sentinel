@@ -13,10 +13,15 @@ block (or error) when the workstation is offline.
 
 ## Decision
 
-- **Event, metadata only, grouped — not a flat bag of fields**: who/where/
-  what/emitted-by as separate nested objects, so a `Sink` (below) can
-  consume or forward one group without parsing keys apart by naming
-  convention. Never the commit message content. Formally specified in
+- **Event, metadata only, grouped — not a flat bag of fields**:
+  who/where/what/emitted-by/run-against as separate nested objects, so a
+  `Sink` (below) can consume or forward one group without parsing keys
+  apart by naming convention. `environment.git_version` is there for a
+  concrete reason: [ADR 0002](0002-global-hook-via-core-hookspath.md)'s
+  global install needs git ≥ 2.9.0, so knowing the git-version spread
+  across the fleet answers "how many workstations can't go global yet"
+  without a separate inventory pass. Never the commit message content.
+  Formally specified in
   [telemetry-event.schema.json](../telemetry-event.schema.json) (JSON
   Schema draft 2020-12) — language-agnostic on purpose, since an `exec`
   sink may be written in anything, not just Go; both the Go producer and
@@ -35,7 +40,8 @@ block (or error) when the workstation is offline.
         { "rule": "format", "level": "error" }
       ]
     },
-    "tool": { "name": "git-commit-sentinel", "version": "0.3.0" }
+    "tool": { "name": "git-commit-sentinel", "version": "0.3.0" },
+    "environment": { "git_version": "2.43.0" }
   }
   ```
 - **Local queue, no network in the hook's critical path**: the hook
