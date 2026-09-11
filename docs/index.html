@@ -54,6 +54,27 @@
     overflow-x: auto;
     font: 13.5px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   }
+  .snippet { position: relative; margin: 0 0 12px; }
+  .snippet pre { margin: 0; padding-right: 72px; }
+  .snippet-label {
+    display: block;
+    font-size: .78rem;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+  .copy-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font: 12px/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    color: var(--muted);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 4px 8px;
+    cursor: pointer;
+  }
+  .copy-btn:hover { color: var(--fg); border-color: var(--muted); }
   code {
     font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     background: var(--code-bg);
@@ -83,9 +104,17 @@
   <span class="badge">Go · stdlib only · off / warn / error per rule</span>
 
   <h2>Install</h2>
-  <pre><code>go install ./cmd/git-commit-sentinel
-git-commit-sentinel setup</code></pre>
-  <p>Installs globally by default — every repo on the machine, no per-repo step. Requires git ≥ 2.9.0.</p>
+  <div class="snippet">
+    <span class="snippet-label">macOS / Linux</span>
+    <pre><code id="install-unix">curl -fsSL https://raw.githubusercontent.com/diuis/git-commit-sentinel/main/scripts/install.sh | sh</code></pre>
+    <button class="copy-btn" data-target="install-unix" type="button">Copy</button>
+  </div>
+  <div class="snippet">
+    <span class="snippet-label">Windows (PowerShell)</span>
+    <pre><code id="install-win">irm https://raw.githubusercontent.com/diuis/git-commit-sentinel/main/scripts/install.ps1 | iex</code></pre>
+    <button class="copy-btn" data-target="install-win" type="button">Copy</button>
+  </div>
+  <p>No Go toolchain, no <code>sudo</code>/admin required. Then run <code>git-commit-sentinel setup</code> — installs globally by default, every repo on the machine. Requires git ≥ 2.9.0.</p>
 
   <h2>On every commit</h2>
   <pre><code>$ git commit -m "fixed a bug"
@@ -118,5 +147,34 @@ git config --global commitsentinel.rules.&lt;rule&gt; off|warn|error</code></pre
     <a href="https://github.com/diuis/git-commit-sentinel">Source, full manual &amp; design decisions on GitHub</a>
   </footer>
 </main>
+<script>
+  document.querySelectorAll(".copy-btn").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var el = document.getElementById(btn.dataset.target);
+      var text = el.textContent;
+      var done = function () {
+        var original = btn.textContent;
+        btn.textContent = "Copied";
+        setTimeout(function () { btn.textContent = original; }, 1500);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, function () { fallbackCopy(text, done); });
+      } else {
+        fallbackCopy(text, done);
+      }
+    });
+  });
+
+  function fallbackCopy(text, done) {
+    var ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand("copy"); done(); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+</script>
 </body>
 </html>
