@@ -7,10 +7,8 @@ import (
 )
 
 // Rule is one independently pluggable Conventional Commits check. New
-// rules are added by building a ruleSpec value and calling Register on it
-// from an init() (see rule_format.go for the pattern) — Validate, the
-// registry, and every existing rule stay untouched (Open/Closed: extension
-// by addition, not by modification).
+// rules register themselves from an init() (see rule_format.go) without
+// touching Validate, the registry, or any existing rule.
 type Rule interface {
 	// Name identifies the rule, and is the suffix of the git config key
 	// (commitsentinel.rules.<Name>) that controls its level.
@@ -24,10 +22,6 @@ type Rule interface {
 	Check(ctx Context) (violated bool, message string)
 }
 
-// ruleSpec is the sole implementation of Rule: a plain value plus a check
-// function, instead of one bespoke type per rule. Every rule_*.go file
-// registers one ruleSpec literal — this is the only place the four Rule
-// methods are implemented, so a new rule adds zero new methods.
 type ruleSpec struct {
 	name         string
 	description  string
@@ -47,15 +41,10 @@ var registry []Rule
 func Register(r Rule) { registry = append(registry, r) }
 
 // Rules returns every registered rule, in registration order. The result
-// is a copy of the internal registry, so a caller can never corrupt the
-// shared, process-wide rule set — e.g. by reassigning an element, or by
-// appending past its capacity and racing a concurrent Register call —
-// through the returned slice.
+// is a copy, so a caller can't corrupt the shared registry through it.
 func Rules() []Rule { return slices.Clone(registry) }
 
-// RuleNames returns the Name() of every registered rule. config.Load uses
-// this to know which commitsentinel.rules.<name> keys to read, without
-// this package's rule catalog ever needing to live in package config.
+// RuleNames returns the Name() of every registered rule.
 func RuleNames() []string {
 	names := make([]string, len(registry))
 	for i, r := range registry {

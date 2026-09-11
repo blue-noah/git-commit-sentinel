@@ -11,21 +11,15 @@ import (
 var headerPattern = regexp.MustCompile(`^(?P<type>[a-zA-Z]+)(\((?P<scope>[^)]+)\))?(?P<breaking>!)?: (?P<description>.*)$`)
 
 // Context carries everything a Rule needs to evaluate one commit message.
-// Validate builds it once (including the header parse) and passes it to
-// every registered Rule by value: since Rule is an exported interface that
-// third-party code could implement and Register, nothing here trusts a
-// Check implementation not to mutate its ctx — passing a copy means it
-// wouldn't matter if one did, since no other rule in the same Validate
-// call shares that copy.
+// Each registered Rule gets its own copy (see Validate), including its own
+// Lines, so one rule can never corrupt what another sees in the same call.
 type Context struct {
 	Header string
 	Lines  []string
 	Cfg    config.Config
 
 	// Parsed is true when Header matched the Conventional Commits grammar.
-	// Type, Scope, Breaking and Description are only meaningful when it is;
-	// rules that depend on them should return "not violated" otherwise,
-	// leaving the report to the format rule.
+	// Type, Scope, Breaking and Description are meaningful only when it is.
 	Parsed      bool
 	Type        string
 	Scope       string
@@ -51,12 +45,6 @@ func newContext(msg string, cfg config.Config) Context {
 	return ctx
 }
 
-// cloneForRule returns an independent copy of c, safe to hand to a single
-// Rule.Check call. Passing Context by value already isolates every scalar
-// field, but Lines is a slice — reference semantics mean a copy of the
-// struct still shares the same backing array as the original, so a rule
-// that (incorrectly) writes into ctx.Lines by index could otherwise
-// corrupt what every other rule in the same Validate call sees.
 func (c Context) cloneForRule() Context {
 	c.Lines = slices.Clone(c.Lines)
 	return c

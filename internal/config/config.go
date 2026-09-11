@@ -47,11 +47,6 @@ func (l Level) Valid() bool {
 	return false
 }
 
-// defaultTypes are the commit types allowed when commitsentinel.types is
-// not configured. Unexported deliberately: the only way to read it is
-// AllowedTypes, which always hands back a copy — so no package can ever
-// reach (and corrupt) this shared slice, not even by convention, because
-// there is no exported name to reach it through.
 var defaultTypes = []string{
 	"feat", "fix", "docs", "style", "refactor",
 	"perf", "test", "build", "ci", "chore", "revert",
@@ -61,14 +56,6 @@ var defaultTypes = []string{
 // configured.
 const DefaultHeaderMaxLength = 100
 
-// This package deliberately has no notion of which rules exist or what
-// their default levels are: that catalog is owned by whatever package
-// defines the rules (internal/conventionalcommit), so that adding a new
-// rule there never requires touching this one (Open/Closed at the package
-// boundary, not just within a single function). Load takes the rule name
-// list as a parameter for exactly this reason.
-
-// section is the git config section under which every key lives.
 const section = "commitsentinel"
 
 // KeyTypes, KeyHeaderMaxLength and KeyRule build the git config key names
@@ -89,15 +76,10 @@ type Config struct {
 	Rules           map[string]Level
 }
 
-// Load reads configuration from src for each rule named in ruleNames.
-// Callers choose what src reads (e.g. a specific git config scope) and
-// which rules exist (this package has no built-in rule catalog — see the
-// note above) — Load has no opinion on either.
-//
-// Unset keys are left as zero values (nil/empty map) rather than filled
-// with defaults, so callers can distinguish "not configured" from
-// "configured to the same value as some default". Use RawLevel,
-// AllowedTypes and MaxHeaderLength to read the result.
+// Load reads configuration from src for each rule named in ruleNames; this
+// package has no rule catalog of its own (see conventionalcommit.Rule),
+// so the caller supplies it. Unset keys stay zero rather than defaulted —
+// use RawLevel, AllowedTypes and MaxHeaderLength to read the result.
 func Load(src Source, ruleNames []string) (Config, error) {
 	cfg := Config{Rules: map[string]Level{}}
 
@@ -137,11 +119,7 @@ func Load(src Source, ruleNames []string) (Config, error) {
 }
 
 // SplitCSV parses a comma-separated list, trimming whitespace and dropping
-// empty entries. It is exported because it defines the same format used
-// both to parse commitsentinel.types out of git config (Load, above) and
-// to normalize a -types flag value before writing it back (see
-// cmd/git-commit-sentinel's setup command) — one function, not two
-// copies agreeing on the format by convention.
+// empty entries — the format used both by Load and by `setup -types`.
 func SplitCSV(raw string) []string {
 	parts := strings.Split(raw, ",")
 	out := make([]string, 0, len(parts))
@@ -155,21 +133,15 @@ func SplitCSV(raw string) []string {
 }
 
 // RawLevel returns the level explicitly configured for rule, and whether
-// one was set at all. It never guesses a default: a rule's default level
-// is a property of the rule itself (see conventionalcommit.Rule), not of
-// this package, so callers combine the two (see
-// conventionalcommit.EffectiveLevel).
+// one was set at all — it never guesses a default (see
+// conventionalcommit.EffectiveLevel, which does).
 func (c Config) RawLevel(rule string) (Level, bool) {
 	lvl, ok := c.Rules[rule]
 	return lvl, ok
 }
 
 // AllowedTypes returns the configured commit types, or the built-in
-// defaults if unset. The result is always a fresh copy: Config's Types
-// field (and the package's internal default list) are never handed out
-// directly, so a caller can never mutate this package's internal state
-// through the returned slice — Go gives slices reference semantics, so
-// returning the field itself would not have been a safe read-only view.
+// defaults if unset. Always a fresh copy, safe for the caller to mutate.
 func (c Config) AllowedTypes() []string {
 	if c.Types != nil {
 		return slices.Clone(c.Types)

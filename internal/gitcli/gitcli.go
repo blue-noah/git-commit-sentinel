@@ -10,28 +10,16 @@ import (
 	"strings"
 )
 
-// The three git invocation seams below are function types rather than one
-// multi-method interface: ConfigGet only ever needs the "get" operation,
-// ConfigSet only "set", DetectVersion/InsideRepo/RepoRoot/GitDir only
-// "output". A fat interface would force every caller (and every test
-// fake) to depend on operations it never uses; a single-operation function
-// type cannot have that problem (Interface Segregation).
 type getFunc func(args []string) (out string, ok bool, err error)
 type setFunc func(args []string) error
 type outputFunc func(args []string) (string, error)
 
-// gitGet, gitSet and gitOutput are the seams used by this package's
-// functions. Tests may replace any subset of them; production code should
-// leave them as the defaults below.
 var (
 	gitGet    getFunc    = execGet
 	gitSet    setFunc    = execSet
 	gitOutput outputFunc = execOutput
 )
 
-// execGet runs a config-style "get" command: ok is false when the queried
-// key is unset (git's exit code 1), err is reserved for unexpected
-// failures.
 func execGet(args []string) (string, bool, error) {
 	out, err := exec.Command("git", args...).Output()
 	if err == nil {
@@ -44,8 +32,6 @@ func execGet(args []string) (string, bool, error) {
 	return "", false, err
 }
 
-// execSet runs a command expected to have no useful stdout, returning any
-// failure with its combined output attached for context.
 func execSet(args []string) error {
 	out, err := exec.Command("git", args...).CombinedOutput()
 	if err != nil {
@@ -54,7 +40,6 @@ func execSet(args []string) error {
 	return nil
 }
 
-// execOutput runs a command and returns its trimmed stdout.
 func execOutput(args []string) (string, error) {
 	out, err := exec.Command("git", args...).Output()
 	if err != nil {
@@ -89,8 +74,6 @@ func DetectVersion() (Version, error) {
 	return parseVersion(raw)
 }
 
-// parseVersion is the pure part of DetectVersion, split out so it can be
-// unit tested against sample output without spawning git.
 func parseVersion(raw string) (Version, error) {
 	raw = strings.TrimSpace(raw)
 
@@ -105,11 +88,6 @@ func parseVersion(raw string) (Version, error) {
 		return Version{}, fmt.Errorf("could not parse git version from %q", raw)
 	}
 
-	// Sscanf stops as soon as the "%d.%d.%d" pattern is satisfied, so a
-	// platform suffix (e.g. "2.43.0.windows.1") is simply left unread, and
-	// a missing trailing part (e.g. "2.9") just leaves Patch at its zero
-	// value — matching this function's previous field-by-field parsing,
-	// whose error this deliberately still discards.
 	v := Version{Raw: raw}
 	fmt.Sscanf(numeric, "%d.%d.%d", &v.Major, &v.Minor, &v.Patch)
 	return v, nil
@@ -148,8 +126,7 @@ type Scope string
 
 const (
 	// ScopeEffective reads the fully merged configuration (local overrides
-	// global overrides system), exactly as git itself sees it. It cannot be
-	// used for writes.
+	// global overrides system); it cannot be used for writes.
 	ScopeEffective Scope = ""
 	ScopeGlobal    Scope = "--global"
 	ScopeLocal     Scope = "--local"
@@ -184,10 +161,7 @@ func ConfigSet(scope Scope, key, value string) error {
 	return nil
 }
 
-// ConfigSource adapts a git config scope to the config.Source interface
-// (Get(key string) (string, bool, error)), so that package config can read
-// git config without ever importing this package. Callers wire the two
-// together, e.g.:
+// ConfigSource adapts a Scope to the config.Source interface:
 //
 //	cfg, err := config.Load(gitcli.ConfigSource{Scope: gitcli.ScopeEffective})
 type ConfigSource struct {
