@@ -96,3 +96,4 @@ revert`.
 | `setup`: "a hook already exists ... not created by git-commit-sentinel" | Another tool owns that hook. Use `-force` only if replacing it is intended. |
 | A repo's hook is silently ignored | Its local `core.hooksPath` may override the global one — `doctor` reports this. |
 | Disable a check | `git config --global commitsentinel.rules.<rule> off` |
+| macOS: "cannot be opened because the developer cannot be verified" | The release binaries aren't signed/notarized. Only affects binaries downloaded via a browser (Gatekeeper quarantines them); `curl`/`wget` downloads and `go install`-built binaries are unaffected. Fix: `xattr -d com.apple.quarantine ./git-commit-sentinel-*-darwin-arm64`, or right-click → Open once. |
