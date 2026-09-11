@@ -5,12 +5,45 @@ Commits](https://www.conventionalcommits.org/) as a git `commit-msg` hook.
 
 ## Install
 
+No Go toolchain needed — these scripts download the right release binary,
+verify its checksum, and put it on `PATH` (no `sudo`/admin required).
+
+**macOS / Linux:**
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/diuis/git-commit-sentinel/main/scripts/install.sh | sh
+```
+
+**Windows (PowerShell):**
+
+```powershell
+irm https://raw.githubusercontent.com/diuis/git-commit-sentinel/main/scripts/install.ps1 | iex
+```
+
+Installs to `~/.local/bin` (macOS/Linux) or `%USERPROFILE%\bin` (Windows)
+by default; override with `INSTALL_DIR` (`$env:INSTALL_DIR` on Windows).
+Safe to re-run — won't duplicate a `PATH` entry that's already there.
+
+<details>
+<summary>Manual download, or building from source</summary>
+
+Download a binary directly from the
+[releases page](https://github.com/diuis/git-commit-sentinel/releases) —
+pick `-darwin-arm64`, `-linux-amd64`, `-linux-arm64` or
+`-windows-amd64.exe` — then `chmod +x` it (macOS/Linux) and place it on
+`PATH` yourself. `SHA256SUMS.txt` in the same release lets you verify it:
+`shasum -a 256 -c SHA256SUMS.txt` (macOS) or `sha256sum -c SHA256SUMS.txt`
+(Linux).
+
+With a Go toolchain instead:
+
 ```sh
 go install ./cmd/git-commit-sentinel
 ```
 
-Make sure the binary is on `PATH` (`go install` puts it in `$(go env GOBIN)`,
-or `$(go env GOPATH)/bin` if `GOBIN` is unset).
+(puts it in `$(go env GOBIN)`, or `$(go env GOPATH)/bin` if `GOBIN` is unset).
+
+</details>
 
 ## Activate
 
@@ -91,7 +124,7 @@ revert`.
 | Symptom | Fix |
 |---|---|
 | Hook doesn't run | `doctor`. If `core.hooksPath` isn't set, run `setup`. |
-| `doctor`: binary not on PATH | `go install ./cmd/git-commit-sentinel`; check `$(go env GOBIN)` is on `PATH`. |
+| `doctor`: binary not on PATH | Re-run the install script (see [Install](#install)), or check your install directory is on `PATH`. |
 | `setup`: "too old for a global install" | git < 2.9.0 — upgrade, or use `-scope local` per repo. |
 | `setup`: "a hook already exists ... not created by git-commit-sentinel" | Another tool owns that hook. Use `-force` only if replacing it is intended. |
 | A repo's hook is silently ignored | Its local `core.hooksPath` may override the global one — `doctor` reports this. |
