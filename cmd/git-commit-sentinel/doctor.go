@@ -18,7 +18,6 @@ import (
 // without touching the real environment.
 var lookPath = exec.LookPath
 
-// checkLevel is the severity of a single diagnostic finding.
 type checkLevel int
 
 const (
