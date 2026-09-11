@@ -14,8 +14,6 @@ import (
 	"git-commit-sentinel/internal/hookfile"
 )
 
-// lookPath is a seam over exec.LookPath so tests can fake PATH resolution
-// without touching the real environment.
 var lookPath = exec.LookPath
 
 type checkLevel int
@@ -37,10 +35,6 @@ func (l checkLevel) label() string {
 	}
 }
 
-// checkResult is one diagnostic finding. Every check<X> function below is
-// pure with respect to its inputs (it reads git/the filesystem but never
-// prints), so it can be tested by asserting on the returned results
-// instead of capturing stdout.
 type checkResult struct {
 	Level   checkLevel
 	Message string
@@ -85,9 +79,6 @@ func runDoctor(args []string) int {
 	return 0
 }
 
-// printReport renders every section and reports whether any result was a
-// failure. It is the only function in this file that writes output, so
-// every decision above it can be tested without capturing stdout.
 func printReport(w io.Writer, sections []section) (healthy bool) {
 	healthy = true
 	for _, s := range sections {
@@ -142,8 +133,6 @@ func checkGlobalHook() []checkResult {
 	}
 }
 
-// checkLocalRepoSection reports on the current repository's hook wiring,
-// or a single informational result if run outside of one.
 func checkLocalRepoSection() []checkResult {
 	if !gitcli.InsideRepo() {
 		return []checkResult{ok("not inside one, skipping")}
@@ -215,8 +204,6 @@ func checkConfig() []checkResult {
 	return results
 }
 
-// checkHookFile inspects a single hook file and reports whether it exists,
-// was created by git-commit-sentinel, and is executable.
 func checkHookFile(path string) checkResult {
 	data, err := os.ReadFile(path)
 	if err != nil {

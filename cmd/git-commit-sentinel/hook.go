@@ -13,8 +13,6 @@ import (
 	"git-commit-sentinel/internal/gitcli"
 )
 
-// runHook is invoked by git itself as the commit-msg hook: it receives the
-// path to the file holding the candidate commit message.
 func runHook(args []string) int {
 	fs := flag.NewFlagSet("hook", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
@@ -63,8 +61,6 @@ func runHook(args []string) int {
 	return 0
 }
 
-// stripComments removes lines starting with '#', matching how git itself
-// strips them before recording the final commit message.
 func stripComments(msg string) string {
 	lines := slices.DeleteFunc(strings.Split(msg, "\n"), func(line string) bool {
 		return strings.HasPrefix(strings.TrimLeft(line, " \t"), "#")

@@ -31,11 +31,6 @@ Running setup again with the same flags is a no-op; running it with
 different values updates the existing installation in place.
 `
 
-// overwritePolicy replaces a bare "force bool" threaded through the
-// install functions below: a named type makes call sites
-// (installHook(path, keepForeign) vs installHook(path, forceOverwrite))
-// self-documenting, and confines the raw CLI flag to the single
-// conversion point in runSetup.
 type overwritePolicy int
 
 const (
@@ -50,9 +45,6 @@ func overwritePolicyFrom(force bool) overwritePolicy {
 	return keepForeign
 }
 
-// abort prints err prefixed with the program name and returns the exit
-// code the caller should return immediately, collapsing the
-// print-then-return-1 pair repeated after every fallible step in runSetup.
 func abort(err error) int {
 	fmt.Fprintf(os.Stderr, "git-commit-sentinel: %v\n", err)
 	return 1
@@ -96,8 +88,6 @@ func runSetup(args []string) int {
 	return 0
 }
 
-// preflightGitVersion detects the installed git version, reports it, and
-// fails early if it cannot support the requested scope.
 func preflightGitVersion(scope string) error {
 	ver, err := gitcli.DetectVersion()
 	if err != nil {
@@ -124,8 +114,6 @@ func warnIfBinaryMissing() {
 	}
 }
 
-// installForScope wires the hook for the requested scope and returns the
-// git config scope subsequent -types/-rule overrides should be written to.
 func installForScope(scope, hooksDirFlag string, policy overwritePolicy) (gitcli.Scope, error) {
 	switch scope {
 	case "global":
@@ -209,9 +197,6 @@ func setupLocal(policy overwritePolicy) error {
 	return nil
 }
 
-// installHook writes the managed commit-msg script at path, idempotently:
-// a no-op if the content is already current, an error if a foreign
-// (non-managed) hook is present and policy is not forceOverwrite.
 func installHook(path string, policy overwritePolicy) error {
 	content := hookfile.Render()
 
@@ -236,8 +221,6 @@ func installHook(path string, policy overwritePolicy) error {
 	return nil
 }
 
-// applyOverrides writes the optional -types/-rule seed values at scope. It
-// is a no-op when neither flag was given.
 func applyOverrides(scope gitcli.Scope, types string, rules ruleLevelFlags) error {
 	if types != "" {
 		list := strings.Join(config.SplitCSV(types), ",")
@@ -268,8 +251,6 @@ func defaultHooksDir() (string, error) {
 	return filepath.Join(base, "git-commit-sentinel", "hooks"), nil
 }
 
-// ruleLevelFlags implements flag.Value to accept repeated -rule name=level
-// flags.
 type ruleLevelFlags []ruleLevelFlag
 
 type ruleLevelFlag struct {

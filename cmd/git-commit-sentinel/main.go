@@ -8,12 +8,6 @@ import (
 	"os"
 )
 
-// version is set at build time via:
-//
-//	go build -ldflags "-X main.version=1.2.3"
-//
-// (see scripts/build-release.sh). "dev" identifies a local, non-release
-// build.
 var version = "dev"
 
 const usage = `git-commit-sentinel — a Conventional Commits git hook
