@@ -7,6 +7,8 @@ independently configurable `off`/`warn`/`error` levels per rule.
 - **Usage**: [docs/MANUAL.md](docs/MANUAL.md) — install, day-to-day
   behavior, configuration, troubleshooting.
 - **Design decisions**: [docs/adr](docs/adr) — why it's built this way.
+- **Docs site**: https://diuis.github.io/git-commit-sentinel/ — the same
+  essentials, as a short static page.
 
 ## Build & test
 
