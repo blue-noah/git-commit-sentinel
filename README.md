@@ -19,3 +19,7 @@ go test ./...
 ```
 
 No external dependencies: only the Go standard library and the `git` CLI.
+
+## License
+
+[MIT](LICENSE)
