@@ -1,94 +1,43 @@
 // Package conventionalcommit validates commit messages against the
 // Conventional Commits specification (https://www.conventionalcommits.org).
+// Each check is a self-contained Rule (see rule.go); Validate itself only
+// builds the shared Context and asks every registered rule to look at it.
 package conventionalcommit
 
-import (
-	"fmt"
-	"regexp"
-	"strings"
-)
+import "git-commit-sentinel/internal/config"
 
-// DefaultTypes are the commit types allowed when no custom list is provided.
-var DefaultTypes = []string{
-	"feat", "fix", "docs", "style", "refactor",
-	"perf", "test", "build", "ci", "chore", "revert",
+// Finding is a single rule violation.
+type Finding struct {
+	Rule    string
+	Level   config.Level
+	Message string
 }
 
-var headerPattern = regexp.MustCompile(`^(?P<type>[a-zA-Z]+)(?P<scope>\([^)]+\))?(?P<breaking>!)?: (?P<description>.+)$`)
-
-// Result carries the outcome of validating a commit message.
-type Result struct {
-	Valid  bool
-	Errors []string
-}
-
-// Validate checks msg against the Conventional Commits format using the
-// given set of allowed types. If types is empty, DefaultTypes is used.
-func Validate(msg string, types []string) Result {
-	if len(types) == 0 {
-		types = DefaultTypes
-	}
-
-	lines := strings.Split(strings.ReplaceAll(msg, "\r\n", "\n"), "\n")
-	header := strings.TrimRight(lines[0], " \t")
-
-	var errs []string
-
-	if header == "" {
-		errs = append(errs, "commit message header is empty")
-		return Result{Valid: false, Errors: errs}
-	}
-
-	match := headerPattern.FindStringSubmatch(header)
-	if match == nil {
-		errs = append(errs, fmt.Sprintf(
-			"header %q does not match Conventional Commits format: <type>(<scope>)!: <description>",
-			header,
-		))
-		return Result{Valid: false, Errors: errs}
-	}
-
-	groups := namedGroups(headerPattern, match)
-
-	commitType := groups["type"]
-	if !contains(types, commitType) {
-		errs = append(errs, fmt.Sprintf(
-			"type %q is not allowed; allowed types: %s",
-			commitType, strings.Join(types, ", "),
-		))
-	}
-
-	description := strings.TrimSpace(groups["description"])
-	if description == "" {
-		errs = append(errs, "description must not be empty")
-	}
-	if strings.HasSuffix(description, ".") {
-		errs = append(errs, "description must not end with a period")
-	}
-
-	if len(lines) > 1 && strings.TrimSpace(lines[1]) != "" {
-		errs = append(errs, "second line must be blank to separate header from body")
-	}
-
-	return Result{Valid: len(errs) == 0, Errors: errs}
-}
-
-func namedGroups(re *regexp.Regexp, match []string) map[string]string {
-	groups := make(map[string]string, len(match))
-	for i, name := range re.SubexpNames() {
-		if i == 0 || name == "" {
-			continue
-		}
-		groups[name] = match[i]
-	}
-	return groups
-}
-
-func contains(items []string, target string) bool {
-	for _, item := range items {
-		if item == target {
+// HasErrors reports whether any finding is at error level.
+func HasErrors(findings []Finding) bool {
+	for _, f := range findings {
+		if f.Level == config.LevelError {
 			return true
 		}
 	}
 	return false
+}
+
+// Validate checks msg against cfg and returns every triggered finding.
+// A rule set to "off" is never even asked to Check; the caller decides
+// what off/warn/error mean (see cmd/hook.go).
+func Validate(msg string, cfg config.Config) []Finding {
+	ctx := newContext(msg, cfg)
+
+	var findings []Finding
+	for _, r := range Rules() {
+		level := EffectiveLevel(cfg, r)
+		if level == config.LevelOff {
+			continue
+		}
+		if violated, message := r.Check(ctx.cloneForRule()); violated {
+			findings = append(findings, Finding{Rule: r.Name(), Level: level, Message: message})
+		}
+	}
+	return findings
 }

@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/git-commit-sentinel/telemetry-event.schema.json",
+  "title": "git-commit-sentinel telemetry event",
+  "description": "One hook invocation, as queued locally and delivered by a Sink (see docs/adr/0005-async-usage-telemetry.md). Never contains commit message content.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "ts", "actor", "repo", "result", "tool"],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "ts": {
+      "type": "string",
+      "format": "date-time",
+      "description": "UTC, RFC 3339."
+    },
+    "actor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["user", "host"],
+      "properties": {
+        "user": { "type": "string", "minLength": 1, "description": "OS username." },
+        "host": { "type": "string", "minLength": 1, "description": "Hostname." }
+      }
+    },
+    "repo": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["hash"],
+      "properties": {
+        "hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{12}$",
+          "description": "First 12 hex chars of sha256(remote origin URL), or of the absolute repo path if there is no remote. Pseudonymous, not anonymous — reversible by anyone who already knows the org's repo URLs."
+        }
+      }
+    },
+    "result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["outcome", "findings"],
+      "properties": {
+        "outcome": {
+          "type": "string",
+          "enum": ["passed", "warned", "rejected"]
+        },
+        "findings": {
+          "type": "array",
+          "description": "One entry per rule that produced a finding. Empty when outcome is \"passed\".",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["rule", "level"],
+            "properties": {
+              "rule": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Rule name, e.g. \"type\", \"format\" — see conventionalcommit.RuleNames()."
+              },
+              "level": {
+                "type": "string",
+                "enum": ["warn", "error"],
+                "description": "\"off\" rules never produce a finding, so never appear here."
+              }
+            }
+          }
+        }
+      }
+    },
+    "tool": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version"],
+      "properties": {
+        "name": { "type": "string", "const": "git-commit-sentinel" },
+        "version": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}
