@@ -11,13 +11,13 @@ verify its checksum, and put it on `PATH` (no `sudo`/admin required).
 **macOS / Linux:**
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/diuis/git-commit-sentinel/main/scripts/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/blue-noah/git-commit-sentinel/main/scripts/install.sh | sh
 ```
 
 **Windows (PowerShell):**
 
 ```powershell
-irm https://raw.githubusercontent.com/diuis/git-commit-sentinel/main/scripts/install.ps1 | iex
+irm https://raw.githubusercontent.com/blue-noah/git-commit-sentinel/main/scripts/install.ps1 | iex
 ```
 
 Installs to `~/.local/bin` (macOS/Linux) or `%USERPROFILE%\bin` (Windows)
@@ -28,7 +28,7 @@ Safe to re-run — won't duplicate a `PATH` entry that's already there.
 <summary>Manual download, or building from source</summary>
 
 Download a binary directly from the
-[releases page](https://github.com/diuis/git-commit-sentinel/releases) —
+[releases page](https://github.com/blue-noah/git-commit-sentinel/releases) —
 pick `-darwin-arm64`, `-linux-amd64`, `-linux-arm64` or
 `-windows-amd64.exe` — then `chmod +x` it (macOS/Linux) and place it on
 `PATH` yourself. `SHA256SUMS.txt` in the same release lets you verify it:

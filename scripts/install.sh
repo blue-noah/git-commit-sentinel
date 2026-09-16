@@ -4,14 +4,14 @@
 # it on PATH. No Go toolchain, no gh CLI, no sudo required.
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/diuis/git-commit-sentinel/main/scripts/install.sh | sh
+#   curl -fsSL https://raw.githubusercontent.com/blue-noah/git-commit-sentinel/main/scripts/install.sh | sh
 #
 # Env overrides:
 #   VERSION=v0.0.1        install a specific release (default: latest)
 #   INSTALL_DIR=/some/dir install location (default: $HOME/.local/bin)
 set -eu
 
-REPO="diuis/git-commit-sentinel"
+REPO="blue-noah/git-commit-sentinel"
 INSTALL_DIR="${INSTALL_DIR:-$HOME/.local/bin}"
 
 os="$(uname -s)"
