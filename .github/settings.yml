@@ -1,0 +1,6 @@
+# Intentionally empty: rulesets are declared per-repo under .github/repos/*.yml, not here. This file must still
+# exist -- safe-settings crashes (TypeError, not a graceful skip) if the base settings.yml is entirely missing.
+# It also can't hold our rulesets directly: settings.yml is always synced as an ORGANIZATION-scoped ruleset
+# (see settings.js's syncAll -> updateOrg -> Rulesets(..., SCOPE.ORG)), a different API/schema (conditions need
+# repository_name, not ref_name) than the repo-scoped one repos/*.yml produces -- confirmed by a real 422
+# ("Invalid property /conditions" on the org rulesets endpoint) when this file held our branch ruleset.
