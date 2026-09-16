@@ -1,3 +1,6 @@
+repository:
+  allow_merge_commit: false
+
 rulesets:
   - name: Default Branch Protection
     target: branch
