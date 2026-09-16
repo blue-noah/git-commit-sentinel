@@ -9,13 +9,13 @@ independently configurable `off`/`warn`/`error` levels per rule.
 macOS / Linux:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/diuis/git-commit-sentinel/main/scripts/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/blue-noah/git-commit-sentinel/main/scripts/install.sh | sh
 ```
 
 Windows (PowerShell):
 
 ```powershell
-irm https://raw.githubusercontent.com/diuis/git-commit-sentinel/main/scripts/install.ps1 | iex
+irm https://raw.githubusercontent.com/blue-noah/git-commit-sentinel/main/scripts/install.ps1 | iex
 ```
 
 No Go toolchain, no `sudo`/admin required. Then: `git-commit-sentinel setup`.
@@ -23,7 +23,7 @@ No Go toolchain, no `sudo`/admin required. Then: `git-commit-sentinel setup`.
 - **Usage**: [docs/MANUAL.md](docs/MANUAL.md) — install, day-to-day
   behavior, configuration, troubleshooting.
 - **Design decisions**: [docs/adr](docs/adr) — why it's built this way.
-- **Docs site**: https://diuis.github.io/git-commit-sentinel/ — the same
+- **Docs site**: https://blue-noah.github.io/git-commit-sentinel/ — the same
   essentials, as a short static page.
 
 ## Build & test

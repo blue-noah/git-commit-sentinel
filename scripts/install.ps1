@@ -3,7 +3,7 @@
 # toolchain, no gh CLI, no admin rights required.
 #
 # Usage:
-#   irm https://raw.githubusercontent.com/diuis/git-commit-sentinel/main/scripts/install.ps1 | iex
+#   irm https://raw.githubusercontent.com/blue-noah/git-commit-sentinel/main/scripts/install.ps1 | iex
 #
 # Env overrides:
 #   $env:VERSION = "v0.0.1"          install a specific release (default: latest)
@@ -11,7 +11,7 @@
 
 $ErrorActionPreference = "Stop"
 
-$Repo = "diuis/git-commit-sentinel"
+$Repo = "blue-noah/git-commit-sentinel"
 $InstallDir = if ($env:INSTALL_DIR) { $env:INSTALL_DIR } else { Join-Path $HOME "bin" }
 
 if (-not [Environment]::Is64BitOperatingSystem) {
