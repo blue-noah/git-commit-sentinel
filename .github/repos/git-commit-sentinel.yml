@@ -1,6 +1,4 @@
 repository:
-  # Merge commits are already rejected by the ruleset's required_linear_history rule below; disabling them here
-  # keeps the PR merge button consistent with it (only squash/rebase are offered).
   allow_merge_commit: false
 
 rulesets:
