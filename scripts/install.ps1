@@ -15,8 +15,7 @@ $Repo = "blue-noah/git-commit-sentinel"
 $InstallDir = if ($env:INSTALL_DIR) { $env:INSTALL_DIR } else { Join-Path $HOME "bin" }
 
 if (-not [Environment]::Is64BitOperatingSystem) {
-    Write-Error "error: unsupported architecture (only 64-bit Windows is published)"
-    exit 1
+    throw "error: unsupported architecture (only 64-bit Windows is published)"
 }
 $Arch = "amd64"
 
@@ -26,8 +25,7 @@ if (-not $Version) {
     $Version = $release.tag_name
 }
 if (-not $Version) {
-    Write-Error "error: could not resolve the latest release version"
-    exit 1
+    throw "error: could not resolve the latest release version"
 }
 
 $VersionNum = $Version.TrimStart("v")
@@ -48,8 +46,7 @@ try {
     $expected = (Select-String -Path $SumsPath -Pattern ([Regex]::Escape($File))).Line.Split(" ")[0]
     $actual = (Get-FileHash -Path $ExePath -Algorithm SHA256).Hash.ToLower()
     if ($expected -ne $actual) {
-        Write-Error "error: checksum mismatch for $File (expected $expected, got $actual)"
-        exit 1
+        throw "error: checksum mismatch for $File (expected $expected, got $actual)"
     }
 
     New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null

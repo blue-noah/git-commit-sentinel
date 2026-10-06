@@ -58,8 +58,11 @@ echo "==> installing git-commit-sentinel ${VERSION} (${goos}/${goarch})"
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 
-curl -fsSL -o "$tmp/$file" "$base_url/$file"
-curl -fsSL -o "$tmp/SHA256SUMS.txt" "$base_url/SHA256SUMS.txt"
+if ! curl -fsSL -o "$tmp/$file" "$base_url/$file" ||
+	! curl -fsSL -o "$tmp/SHA256SUMS.txt" "$base_url/SHA256SUMS.txt"; then
+	echo "error: could not download $file from release $VERSION (does that release exist?)" >&2
+	exit 1
+fi
 
 echo "==> verifying checksum"
 (
