@@ -19,7 +19,7 @@ rulesets:
           # GitHub's ruleset API requires all five of these on a pull_request rule (rejects a partial object) —
           # the other four are no-ops in practice while required_approving_review_count is 0.
           required_approving_review_count: 0
-          dismiss_stale_reviews_on_push: false
+          dismiss_stale_reviews_on_push: true
           require_code_owner_review: false
           require_last_push_approval: false
           required_review_thread_resolution: false
