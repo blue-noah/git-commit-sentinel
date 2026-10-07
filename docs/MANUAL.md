@@ -11,7 +11,7 @@ verify its checksum, and put it on `PATH` (no `sudo`/admin required).
 **macOS / Linux:**
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/blue-noah/git-commit-sentinel/main/scripts/install.sh | sh
+curl --proto '=https' --tlsv1.2 -fsSL https://raw.githubusercontent.com/blue-noah/git-commit-sentinel/main/scripts/install.sh | sh
 ```
 
 **Windows (PowerShell):**
