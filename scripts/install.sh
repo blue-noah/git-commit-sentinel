@@ -4,7 +4,7 @@
 # it on PATH. No Go toolchain, no gh CLI, no sudo required.
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/blue-noah/git-commit-sentinel/main/scripts/install.sh | sh
+#   curl --proto '=https' --tlsv1.2 -fsSL https://raw.githubusercontent.com/blue-noah/git-commit-sentinel/main/scripts/install.sh | sh
 #
 # Env overrides:
 #   VERSION=v0.0.1        install a specific release (default: latest)
@@ -41,7 +41,7 @@ if [ "$goos" = "darwin" ] && [ "$goarch" = "amd64" ]; then
 fi
 
 if [ -z "${VERSION:-}" ]; then
-	VERSION="$(curl -fsSL "https://api.github.com/repos/${REPO}/releases/latest" |
+	VERSION="$(curl --proto '=https' --tlsv1.2 -fsSL "https://api.github.com/repos/${REPO}/releases/latest" |
 		grep -m1 '"tag_name"' | sed -E 's/.*"tag_name": *"([^"]+)".*/\1/')"
 fi
 if [ -z "${VERSION:-}" ]; then
@@ -58,8 +58,8 @@ echo "==> installing git-commit-sentinel ${VERSION} (${goos}/${goarch})"
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 
-if ! curl -fsSL -o "$tmp/$file" "$base_url/$file" ||
-	! curl -fsSL -o "$tmp/SHA256SUMS.txt" "$base_url/SHA256SUMS.txt"; then
+if ! curl --proto '=https' --tlsv1.2 -fsSL -o "$tmp/$file" "$base_url/$file" ||
+	! curl --proto '=https' --tlsv1.2 -fsSL -o "$tmp/SHA256SUMS.txt" "$base_url/SHA256SUMS.txt"; then
 	echo "error: could not download $file from release $VERSION (does that release exist?)" >&2
 	exit 1
 fi
