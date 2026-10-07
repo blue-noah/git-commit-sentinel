@@ -12,13 +12,13 @@ jobs:
   safeSettingsSync:
     runs-on: ubuntu-latest
     env:
-      # Pinned to 2.1.18, not the latest 2.1.21: 2.1.19+ bundle probot@14.2.4, whose Probot constructor
+      # Pinned to 2.1.18 (by its commit: a tag can move), not the latest 2.1.21: 2.1.19+ bundle probot@14.2.4, whose Probot constructor
       # initializes `log` asynchronously — full-sync.js calls `probot.log.info(...)` synchronously right after
       # `createProbot()`, hitting a still-null log (TypeError: Cannot read properties of null (reading 'info')).
       # 2.1.18 bundles probot@13.4.4, which sets `log` synchronously in the constructor. Confirmed via probot's
       # own source across both versions; Rulesets support (lib/plugins/rulesets.js) is present in 2.1.18 too, and
       # the 2.1.18→2.1.21 diff is dependency bumps only, no ruleset logic changes.
-      SAFE_SETTINGS_VERSION: 2.1.18
+      SAFE_SETTINGS_COMMIT: 594f3c706de6c4ddafb1a86dfa7468f19337e54f
       SAFE_SETTINGS_CODE_DIR: ${{ github.workspace }}/.safe-settings-code
     steps:
       # Self-checkout: this repo is its own "admin repo", holding its own .github/repos/*.yml config.
@@ -27,12 +27,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: github-community-projects/safe-settings
-          ref: ${{ env.SAFE_SETTINGS_VERSION }}
+          ref: ${{ env.SAFE_SETTINGS_COMMIT }}
           path: ${{ env.SAFE_SETTINGS_CODE_DIR }}
 
       - uses: actions/setup-node@v4
 
-      - run: npm ci
+      - run: npm ci --ignore-scripts
         working-directory: ${{ env.SAFE_SETTINGS_CODE_DIR }}
 
       - run: npm run full-sync
