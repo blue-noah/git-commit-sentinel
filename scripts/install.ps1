@@ -29,6 +29,8 @@ if (-not $Version) {
 }
 
 $VersionNum = $Version.TrimStart("v")
+# Release tags always carry the "v" prefix; accept VERSION with or without it.
+$Version = "v$VersionNum"
 $File = "git-commit-sentinel-$VersionNum-windows-$Arch.exe"
 $BaseUrl = "https://github.com/$Repo/releases/download/$Version"
 
