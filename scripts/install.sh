@@ -96,7 +96,21 @@ case ":$PATH:" in
 				line="export PATH=\"$INSTALL_DIR:\$PATH\""
 				;;
 			bash)
-				rc="$HOME/.bashrc"
+				# macOS terminals start bash as a login shell, which reads
+				# the first of .bash_profile/.bash_login/.profile that exists
+				# and never .bashrc. Creating .bash_profile only when none
+				# exists avoids shadowing an existing .profile.
+				if [ "$goos" = "darwin" ]; then
+					rc="$HOME/.bash_profile"
+					for f in "$HOME/.bash_profile" "$HOME/.bash_login" "$HOME/.profile"; do
+						if [ -f "$f" ]; then
+							rc="$f"
+							break
+						fi
+					done
+				else
+					rc="$HOME/.bashrc"
+				fi
 				line="export PATH=\"$INSTALL_DIR:\$PATH\""
 				;;
 			fish)
