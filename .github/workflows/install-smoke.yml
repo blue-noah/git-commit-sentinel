@@ -116,6 +116,16 @@ jobs:
           echo "GIT_COMMIT_SENTINEL_VERSION=$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName -q .tagName)" >> "$GITHUB_ENV"
           echo "GIT_COMMIT_SENTINEL_INSTALL_DIR=$RUNNER_TEMP\\gcs-bin" >> "$GITHUB_ENV"
 
+      # A user PATH entry that references another variable, as e.g.
+      # %JAVA_HOME%\bin does: the installer must leave it unexpanded.
+      - name: Seed the user PATH with a %VAR% reference
+        run: |
+          [Environment]::SetEnvironmentVariable("GCS_SMOKE_HOME", "C:\gcs-smoke", "User")
+          $key = [Microsoft.Win32.Registry]::CurrentUser.CreateSubKey("Environment")
+          $raw = $key.GetValue("Path", "", [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames)
+          $key.SetValue("Path", "%GCS_SMOKE_HOME%\bin;$raw", [Microsoft.Win32.RegistryValueKind]::ExpandString)
+          $key.Close()
+
       # Actions prepends `$ErrorActionPreference = 'stop'` to every
       # PowerShell step, so reset it first or a leak would go unnoticed.
       - name: Install twice, leaving the session untouched
@@ -132,12 +142,23 @@ jobs:
           Write-Host $out
           if ($out -ne "git-commit-sentinel $($env:GIT_COMMIT_SENTINEL_VERSION.TrimStart('v'))") { throw "unexpected version: $out" }
 
-      - name: User PATH holds the install dir exactly once
+      - name: User PATH holds the install dir once and keeps %VAR% references
         run: |
-          $userPath = [Environment]::GetEnvironmentVariable("PATH", "User")
-          Write-Host "user PATH: $userPath"
-          $count = @($userPath -split ";" | Where-Object { $_ -eq $env:GIT_COMMIT_SENTINEL_INSTALL_DIR }).Count
+          # Same dir with a trailing backslash: must still count as present.
+          $env:GIT_COMMIT_SENTINEL_INSTALL_DIR += "\"
+          Get-Content -Raw scripts/install.ps1 | Invoke-Expression
+          $dir = $env:GIT_COMMIT_SENTINEL_INSTALL_DIR.TrimEnd("\")
+
+          $key = [Microsoft.Win32.Registry]::CurrentUser.OpenSubKey("Environment")
+          $raw = $key.GetValue("Path", "", [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames)
+          $kind = $key.GetValueKind("Path")
+          $key.Close()
+          Write-Host "user PATH ($kind): $raw"
+
+          $count = @($raw -split ";" | Where-Object { $_.TrimEnd("\") -eq $dir }).Count
           if ($count -ne 1) { throw "expected the install dir once in the user PATH, found $count" }
+          if ($raw -notlike "*%GCS_SMOKE_HOME%\bin*") { throw "the %GCS_SMOKE_HOME% reference was expanded" }
+          if ($kind -ne "ExpandString") { throw "user PATH must stay REG_EXPAND_SZ, is $kind" }
 
       - name: Put the binary on PATH for the next step
         shell: bash
