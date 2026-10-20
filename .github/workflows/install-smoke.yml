@@ -131,9 +131,11 @@ jobs:
       - name: Install twice, leaving the session untouched
         run: |
           $ErrorActionPreference = "Continue"
+          $ProgressPreference = "Continue"
           Get-Content -Raw scripts/install.ps1 | Invoke-Expression
           Get-Content -Raw scripts/install.ps1 | Invoke-Expression
           if ($ErrorActionPreference -ne "Continue") { throw "ErrorActionPreference leaked: $ErrorActionPreference" }
+          if ($ProgressPreference -ne "Continue") { throw "ProgressPreference leaked: $ProgressPreference" }
           foreach ($name in "Version", "Tmp", "InstallDir") {
             if (Get-Variable -Name $name -ErrorAction SilentlyContinue) { throw "variable `$$name leaked into the session" }
           }

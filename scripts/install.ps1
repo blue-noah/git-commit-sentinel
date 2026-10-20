@@ -18,6 +18,9 @@
 # is process-wide, so the update at the end still reaches the session.
 & {
     $ErrorActionPreference = "Stop"
+    # Windows PowerShell 5.1 redraws the progress bar for every chunk it
+    # downloads, which slows the download down several times over.
+    $ProgressPreference = "SilentlyContinue"
 
     $Repo = "blue-noah/git-commit-sentinel"
     $InstallDir = if ($env:GIT_COMMIT_SENTINEL_INSTALL_DIR) { $env:GIT_COMMIT_SENTINEL_INSTALL_DIR } else { Join-Path $HOME "bin" }
@@ -39,9 +42,12 @@
         }
     }
 
+    # -UseBasicParsing on every web call: without it Windows PowerShell 5.1
+    # needs the Internet Explorer engine, missing on Server Core and on
+    # systems where IE was never set up. PowerShell 7 accepts and ignores it.
     $Version = $env:GIT_COMMIT_SENTINEL_VERSION
     if (-not $Version) {
-        $release = Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/releases/latest"
+        $release = Invoke-RestMethod -UseBasicParsing -Uri "https://api.github.com/repos/$Repo/releases/latest"
         $Version = $release.tag_name
     }
     if (-not $Version) {
@@ -61,8 +67,8 @@
         $ExePath = Join-Path $Tmp $File
         $SumsPath = Join-Path $Tmp "SHA256SUMS.txt"
 
-        Invoke-WebRequest -Uri "$BaseUrl/$File" -OutFile $ExePath
-        Invoke-WebRequest -Uri "$BaseUrl/SHA256SUMS.txt" -OutFile $SumsPath
+        Invoke-WebRequest -UseBasicParsing -Uri "$BaseUrl/$File" -OutFile $ExePath
+        Invoke-WebRequest -UseBasicParsing -Uri "$BaseUrl/SHA256SUMS.txt" -OutFile $SumsPath
 
         Write-Host "==> verifying checksum"
         $expected = (Select-String -Path $SumsPath -Pattern ([Regex]::Escape($File))).Line.Split(" ")[0]
