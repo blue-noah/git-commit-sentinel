@@ -22,15 +22,20 @@ jobs:
       SAFE_SETTINGS_CODE_DIR: ${{ github.workspace }}/.safe-settings-code
     steps:
       # Self-checkout: this repo is its own "admin repo", holding its own .github/repos/*.yml config.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           repository: github-community-projects/safe-settings
           ref: ${{ env.SAFE_SETTINGS_COMMIT }}
           path: ${{ env.SAFE_SETTINGS_CODE_DIR }}
 
-      - uses: actions/setup-node@v4
+      # No dependency cache: this job holds the app's private key, and a
+      # restored cache is a path for tampered dependencies. v5+ would enable
+      # one automatically for a package.json with a packageManager field.
+      - uses: actions/setup-node@v7
+        with:
+          package-manager-cache: false
 
       - run: npm ci --ignore-scripts
         working-directory: ${{ env.SAFE_SETTINGS_CODE_DIR }}
