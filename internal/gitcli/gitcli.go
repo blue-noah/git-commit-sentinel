@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"os/exec"
+	"regexp"
 	"strings"
 )
 
@@ -159,6 +160,43 @@ func ConfigSet(scope Scope, key, value string) error {
 		return fmt.Errorf("git config %s %s: %w", scope, key, err)
 	}
 	return nil
+}
+
+// ConfigUnset removes a single-valued config key at the given scope.
+// Unsetting a key that isn't set is not an error.
+func ConfigUnset(scope Scope, key string) error {
+	if scope == ScopeEffective {
+		return fmt.Errorf("ConfigUnset requires an explicit scope")
+	}
+	if _, isSet, err := ConfigGet(scope, key); err != nil || !isSet {
+		return err
+	}
+	if err := gitSet([]string{"config", string(scope), "--unset", key}); err != nil {
+		return fmt.Errorf("git config %s --unset %s: %w", scope, key, err)
+	}
+	return nil
+}
+
+// RemoveSection removes the config section name (e.g. "commitsentinel",
+// or "commitsentinel.rules" for its subsection) at the given scope, and
+// reports whether it held any key. Its existence is checked first because
+// git reports a missing section only through a localized message.
+func RemoveSection(scope Scope, name string) (bool, error) {
+	if scope == ScopeEffective {
+		return false, fmt.Errorf("RemoveSection requires an explicit scope")
+	}
+	pattern := "^" + regexp.QuoteMeta(name) + `\.[^.]+$`
+	_, found, err := gitGet([]string{"config", string(scope), "--get-regexp", pattern})
+	if err != nil {
+		return false, fmt.Errorf("git config %s --get-regexp %s: %w", scope, pattern, err)
+	}
+	if !found {
+		return false, nil
+	}
+	if err := gitSet([]string{"config", string(scope), "--remove-section", name}); err != nil {
+		return false, fmt.Errorf("git config %s --remove-section %s: %w", scope, name, err)
+	}
+	return true, nil
 }
 
 // ConfigSource adapts a Scope to the config.Source interface:

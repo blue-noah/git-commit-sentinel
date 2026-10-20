@@ -80,3 +80,19 @@ jobs:
             *) echo "error: the commit failed, but not because of the hook" >&2; exit 1 ;;
           esac
           git commit -q --allow-empty -m "feat: no PATH needed"
+
+      - name: Uninstall removes the hook and settings
+        run: |
+          git config --global commitsentinel.types feat,fix
+          git-commit-sentinel uninstall
+          for key in core.hooksPath commitsentinel.types; do
+            if git config --global --get "$key"; then
+              echo "error: global $key is still set" >&2
+              exit 1
+            fi
+          done
+
+          cd "$(mktemp -d)"
+          git init -q
+          git commit -q --allow-empty -m "fixed a bug"
+          git-commit-sentinel uninstall

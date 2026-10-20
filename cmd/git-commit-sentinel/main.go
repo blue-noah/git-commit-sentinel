@@ -15,6 +15,7 @@ const usage = `git-commit-sentinel — a Conventional Commits git hook
 Usage:
   git-commit-sentinel setup [flags]   install the commit-msg hook (see -h)
   git-commit-sentinel doctor          diagnose the installation and config
+  git-commit-sentinel uninstall       remove the hook and settings setup created (see -h)
   git-commit-sentinel hook <file>     validate a commit message (called by git itself)
   git-commit-sentinel version         print the version
 
@@ -46,6 +47,8 @@ func realMain(args []string) int {
 		return runSetup(args[1:])
 	case "doctor":
 		return runDoctor(args[1:])
+	case "uninstall":
+		return runUninstall(args[1:])
 	case "-h", "--help", "help":
 		fmt.Fprint(os.Stdout, usage)
 		return 0

@@ -28,6 +28,10 @@ Installs the latest release to `~/.local/bin` (macOS/Linux) or
 `%USERPROFILE%\bin` (Windows). Safe to re-run — won't duplicate a `PATH`
 entry that's already there.
 
+**Upgrade** by running the same command again: it replaces the binary in
+place, and the hook keeps using it. Coming from v0.0.2 or earlier, also
+re-run `git-commit-sentinel setup` once (`doctor` points this out).
+
 The `PATH` change reaches **new** terminals only:
 
 - **macOS / Linux**: open a new terminal before running
@@ -42,11 +46,11 @@ macOS/Linux set them on `sh`, after the pipe — before `curl` they would
 only reach `curl`:
 
 ```sh
-curl --proto '=https' --tlsv1.2 -fsSL https://raw.githubusercontent.com/blue-noah/git-commit-sentinel/main/scripts/install.sh | GIT_COMMIT_SENTINEL_VERSION=v0.0.1 GIT_COMMIT_SENTINEL_INSTALL_DIR="$HOME/bin" sh
+curl --proto '=https' --tlsv1.2 -fsSL https://raw.githubusercontent.com/blue-noah/git-commit-sentinel/main/scripts/install.sh | GIT_COMMIT_SENTINEL_VERSION=v0.0.4 GIT_COMMIT_SENTINEL_INSTALL_DIR="$HOME/bin" sh
 ```
 
 ```powershell
-$env:GIT_COMMIT_SENTINEL_VERSION = "v0.0.1"; $env:GIT_COMMIT_SENTINEL_INSTALL_DIR = "C:\tools\bin"
+$env:GIT_COMMIT_SENTINEL_VERSION = "v0.0.4"; $env:GIT_COMMIT_SENTINEL_INSTALL_DIR = "C:\tools\bin"
 irm https://raw.githubusercontent.com/blue-noah/git-commit-sentinel/main/scripts/install.ps1 | iex
 ```
 
@@ -115,8 +119,9 @@ git-commit-sentinel doctor
 ```
 
 Checks git version, binary on `PATH`, hook status (global + local), and
-effective config. `[FAIL]` = broken; `[WARN]` = informational. Run this
-first whenever the hook doesn't fire.
+effective config. `[FAIL]` = broken; `[WARN]` = worth a look, but commits
+are still checked. Each line says how to fix it. Run this first whenever
+the hook doesn't fire.
 
 ## Configuration
 
@@ -148,36 +153,26 @@ revert`.
 
 ## Uninstall
 
-1. **Global hook** — check that `core.hooksPath` points to
-   git-commit-sentinel's directory, then unset it and remove the directory:
+1. **Hook and settings** — remove what `setup` created:
 
    ```sh
-   git config --global core.hooksPath   # expect .../git-commit-sentinel/hooks
-   git config --global --unset core.hooksPath
-   rm -rf ~/.config/git-commit-sentinel   # $XDG_CONFIG_HOME/git-commit-sentinel if set
+   git-commit-sentinel uninstall
    ```
 
-   On Windows the directory is `%USERPROFILE%\.config\git-commit-sentinel`.
+   It deletes the global hook only if git-commit-sentinel wrote it, unsets
+   `core.hooksPath` once that directory holds no other hooks, and removes
+   the global `commitsentinel.*` settings (`-keep-config` keeps them). In
+   each repository set up with `-scope local`, run
+   `git-commit-sentinel uninstall -scope local` as well. Hooks and
+   settings it didn't create are left alone, and running it again is a
+   no-op. Needs v0.0.4 or later: if `uninstall` is an unknown command,
+   upgrade first (see [Install](#install)).
 
-2. **Per-repository hooks** — in each repository set up with
-   `-scope local`, delete `.git/hooks/commit-msg`.
-
-3. **Configuration** — if you set any `commitsentinel.*` keys (rule levels
-   live in a section of their own, so remove both; git reports "no such
-   section" for one you never set):
-
-   ```sh
-   git config --global --remove-section commitsentinel
-   git config --global --remove-section commitsentinel.rules
-   ```
-
-   Run the same without `--global` inside repositories with local settings.
-
-4. **Binary** — delete `~/.local/bin/git-commit-sentinel` (macOS/Linux) or
+2. **Binary** — delete `~/.local/bin/git-commit-sentinel` (macOS/Linux) or
    `%USERPROFILE%\bin\git-commit-sentinel.exe` (Windows), or wherever
    `GIT_COMMIT_SENTINEL_INSTALL_DIR` pointed.
 
-5. **`PATH`** — only if nothing else lives in that directory: remove the
+3. **`PATH`** — only if nothing else lives in that directory: remove the
    line the installer added to your shell file (`~/.zshrc`, `~/.bashrc`,
    `~/.bash_profile`, `~/.profile` or fish's `config.fish`), or on Windows
    the entry in the user `PATH` (Settings → System → About → Advanced
@@ -188,12 +183,13 @@ revert`.
 | Symptom | Fix |
 |---|---|
 | Hook doesn't run | `doctor`. If `core.hooksPath` isn't set, run `setup`. |
-| `doctor`: binary not on PATH | Re-run the install script (see [Install](#install)), or check your install directory is on `PATH`. |
+| `git-commit-sentinel: command not found` right after installing | The `PATH` change reaches new terminals only — open one (see [Install](#install)). On Windows, restart terminals and IDEs that were already open. |
+| `git-commit-sentinel: not found` when committing from an IDE or GUI git client | Re-run `git-commit-sentinel setup`. Hooks it writes run the binary by its full path, independent of the app's `PATH`; hooks from v0.0.2 or earlier look it up on `PATH`. |
+| `doctor`: binary not on PATH | Hooks written by `setup` still work, since they run the binary by full path. To run it by name, open a new terminal or re-run the install script (see [Install](#install)). |
+| `doctor`: hook "was written by another git-commit-sentinel binary or version" | Re-run `git-commit-sentinel setup`, with `-scope local` for a repository's own hook. |
+| A repo's hook is silently ignored | Its local `core.hooksPath` may override the global one — `doctor` reports this. |
 | `setup`: "too old for a global install" | git < 2.9.0 — upgrade, or use `-scope local` per repo. |
 | `setup`: "a hook already exists ... not created by git-commit-sentinel" | Another tool owns that hook. Use `-force` only if replacing it is intended. |
-| A repo's hook is silently ignored | Its local `core.hooksPath` may override the global one — `doctor` reports this. |
 | Disable a check | `git config --global commitsentinel.rules.<rule> off` |
-| `git-commit-sentinel: not found` when committing from an IDE or GUI git client | Re-run `git-commit-sentinel setup`. Hooks it writes run the binary by its full path, independent of the app's `PATH`; hooks from v0.0.2 or earlier look it up on `PATH`. |
-| `git-commit-sentinel: command not found` right after installing | The `PATH` change reaches new terminals only — open one (see [Install](#install)). On Windows, restart terminals and IDEs that were already open. |
 | Windows: SmartScreen or antivirus warns about the binary | The release binaries aren't code-signed. The install script verifies the SHA-256 checksum and its download isn't marked by SmartScreen. For a browser download, check it against `SHA256SUMS.txt` (`Get-FileHash <file>`), then `Unblock-File <file>`. |
 | macOS: "cannot be opened because the developer cannot be verified" | The release binaries aren't signed/notarized. Only affects binaries downloaded via a browser (Gatekeeper quarantines them); `curl`/`wget` downloads and `go install`-built binaries are unaffected. Fix: `xattr -d com.apple.quarantine ./git-commit-sentinel-*-darwin-arm64`, or right-click → Open once. |

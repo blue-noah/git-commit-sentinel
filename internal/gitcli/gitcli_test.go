@@ -158,6 +158,83 @@ func TestConfigSetPropagatesFailure(t *testing.T) {
 	}
 }
 
+func TestConfigUnsetRequiresExplicitScope(t *testing.T) {
+	if err := ConfigUnset(ScopeEffective, "core.hooksPath"); err == nil {
+		t.Fatal("ConfigUnset(ScopeEffective, ...) = nil; want an error")
+	}
+}
+
+func TestConfigUnsetRemovesSetKey(t *testing.T) {
+	withGet(t, func([]string) (string, bool, error) { return "/hooks", true, nil })
+	var gotArgs []string
+	withSet(t, func(args []string) error {
+		gotArgs = args
+		return nil
+	})
+
+	if err := ConfigUnset(ScopeGlobal, "core.hooksPath"); err != nil {
+		t.Fatalf("ConfigUnset() error = %v", err)
+	}
+	if want := "config --global --unset core.hooksPath"; strings.Join(gotArgs, " ") != want {
+		t.Errorf("ConfigUnset() invoked git with %v, want %s", gotArgs, want)
+	}
+}
+
+func TestConfigUnsetSkipsUnsetKey(t *testing.T) {
+	withGet(t, func([]string) (string, bool, error) { return "", false, nil })
+	withSet(t, func([]string) error {
+		t.Error("ConfigUnset ran git config --unset for a key that isn't set")
+		return nil
+	})
+
+	if err := ConfigUnset(ScopeGlobal, "core.hooksPath"); err != nil {
+		t.Fatalf("ConfigUnset(unset key) error = %v", err)
+	}
+}
+
+func TestRemoveSectionRemovesExistingSection(t *testing.T) {
+	var gotPattern string
+	withGet(t, func(args []string) (string, bool, error) {
+		gotPattern = args[len(args)-1]
+		return "commitsentinel.rules.type off", true, nil
+	})
+	var gotArgs []string
+	withSet(t, func(args []string) error {
+		gotArgs = args
+		return nil
+	})
+
+	removed, err := RemoveSection(ScopeLocal, "commitsentinel.rules")
+	if err != nil || !removed {
+		t.Fatalf("RemoveSection() = %v, %v; want true, nil", removed, err)
+	}
+	if want := `^commitsentinel\.rules\.[^.]+$`; gotPattern != want {
+		t.Errorf("RemoveSection() matched keys with %q, want %q", gotPattern, want)
+	}
+	if want := "config --local --remove-section commitsentinel.rules"; strings.Join(gotArgs, " ") != want {
+		t.Errorf("RemoveSection() invoked git with %v, want %s", gotArgs, want)
+	}
+}
+
+func TestRemoveSectionSkipsMissingSection(t *testing.T) {
+	withGet(t, func([]string) (string, bool, error) { return "", false, nil })
+	withSet(t, func([]string) error {
+		t.Error("RemoveSection ran git config --remove-section for a missing section")
+		return nil
+	})
+
+	removed, err := RemoveSection(ScopeGlobal, "commitsentinel")
+	if err != nil || removed {
+		t.Fatalf("RemoveSection(missing) = %v, %v; want false, nil", removed, err)
+	}
+}
+
+func TestRemoveSectionRequiresExplicitScope(t *testing.T) {
+	if _, err := RemoveSection(ScopeEffective, "commitsentinel"); err == nil {
+		t.Fatal("RemoveSection(ScopeEffective, ...) = nil error; want an error")
+	}
+}
+
 func TestInsideRepo(t *testing.T) {
 	withOutput(t, func([]string) (string, error) { return "true", nil })
 	if !InsideRepo() {

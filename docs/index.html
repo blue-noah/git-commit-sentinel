@@ -49,6 +49,9 @@
     padding: 2px 10px;
     margin-bottom: 24px;
   }
+  .links { margin: 0 0 8px; font-size: .95rem; }
+  .links a + a::before { content: "·"; color: var(--muted); margin: 0 10px; }
+  ul { margin: 0 0 12px; padding-left: 22px; }
   h2 {
     font-size: 1.05rem;
     text-transform: uppercase;
@@ -115,6 +118,9 @@
   <h1>git-commit-sentinel</h1>
   <p class="tagline">A git <code>commit-msg</code> hook that validates Conventional Commits.</p>
   <span class="badge">Go · stdlib only · off / warn / error per rule</span>
+  <nav class="links">
+    <a href="https://github.com/blue-noah/git-commit-sentinel/blob/main/docs/MANUAL.md">User manual</a><a href="https://github.com/blue-noah/git-commit-sentinel/releases">Releases</a><a href="https://github.com/blue-noah/git-commit-sentinel">Source</a>
+  </nav>
 
   <h2>Install</h2>
   <div class="snippet">
@@ -127,9 +133,19 @@
     <pre><code id="install-win">irm https://raw.githubusercontent.com/blue-noah/git-commit-sentinel/main/scripts/install.ps1 | iex</code></pre>
     <button class="copy-btn" data-target="install-win" type="button">Copy</button>
   </div>
-  <p>No Go toolchain, no <code>sudo</code>/admin required. Intel Macs and Windows on ARM are not supported. Then, in a new terminal, run <code>git-commit-sentinel setup</code> — installs globally by default, every repo on the machine. Requires git ≥ 2.9.0.</p>
+  <p>No Go toolchain, no <code>sudo</code>/admin required. Supported: macOS on Apple Silicon, Linux (x86-64 and arm64), Windows x64. To upgrade, run the same command again. Pinning a version, a custom location, manual download: see the <a href="https://github.com/blue-noah/git-commit-sentinel/blob/main/docs/MANUAL.md#install">manual</a>.</p>
+
+  <h2>Activate</h2>
+  <p>In a new terminal, so the updated <code>PATH</code> applies:</p>
+  <pre><code>git-commit-sentinel setup</code></pre>
+  <p>Installs the hook globally, for every repository on the machine. Requires git ≥ 2.9.0. For a single repository, run <code>git-commit-sentinel setup -scope local</code> inside it.</p>
 
   <h2>On every commit</h2>
+  <ul>
+    <li><strong>Valid</strong>: the commit proceeds silently.</li>
+    <li><strong><code>warn</code> violation</strong> (e.g. a trailing period): printed, the commit proceeds.</li>
+    <li><strong><code>error</code> violation</strong> (e.g. an unknown type): the commit is rejected.</li>
+  </ul>
   <pre><code>$ git commit -m "fixed a bug"
 git-commit-sentinel: error: [format] header "fixed a bug" does not match
 the expected format: &lt;type&gt;(&lt;scope&gt;)!: &lt;description&gt;
@@ -149,15 +165,24 @@ commit rejected — fix the errors above, or adjust a rule's level with:
   </table>
 
   <h2>Configure</h2>
+  <p>Settings live in <code>git config</code>: global applies everywhere, local (inside a repository) overrides it there.</p>
   <pre><code>git config --global commitsentinel.types "feat,fix,docs,chore"
+git config --global commitsentinel.headerMaxLength 72
 git config --global commitsentinel.rules.&lt;rule&gt; off|warn|error</code></pre>
+  <p>Default types: <code>feat fix docs style refactor perf test build ci chore revert</code>. More in the <a href="https://github.com/blue-noah/git-commit-sentinel/blob/main/docs/MANUAL.md#configuration">manual</a>.</p>
 
   <h2>Diagnose</h2>
   <pre><code>git-commit-sentinel doctor</code></pre>
-  <p>Checks git version, PATH, hook status (global + local), effective config.</p>
+  <p>Checks git version, <code>PATH</code>, hook status (global + local) and effective config. <code>[FAIL]</code> means broken; <code>[WARN]</code> is worth a look, but commits are still checked. Common problems and fixes: <a href="https://github.com/blue-noah/git-commit-sentinel/blob/main/docs/MANUAL.md#troubleshooting">troubleshooting</a>.</p>
+
+  <h2>Uninstall</h2>
+  <pre><code>git-commit-sentinel uninstall</code></pre>
+  <p>Removes the hook and settings <code>setup</code> created, leaving other tools' hooks alone. Then delete the binary; the <a href="https://github.com/blue-noah/git-commit-sentinel/blob/main/docs/MANUAL.md#uninstall">manual</a> has the full steps.</p>
 
   <footer>
-    <a href="https://github.com/blue-noah/git-commit-sentinel">Source, full manual &amp; design decisions on GitHub</a>
+    <nav class="links">
+      <a href="https://github.com/blue-noah/git-commit-sentinel/blob/main/docs/MANUAL.md">User manual</a><a href="https://github.com/blue-noah/git-commit-sentinel/tree/main/docs/adr">Design decisions</a><a href="https://github.com/blue-noah/git-commit-sentinel/releases">Releases</a><a href="https://github.com/blue-noah/git-commit-sentinel">Source</a><a href="https://github.com/blue-noah/git-commit-sentinel/blob/main/LICENSE">MIT License</a>
+    </nav>
   </footer>
 </main>
 <script>
