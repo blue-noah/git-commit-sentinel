@@ -13,7 +13,7 @@ import (
 
 func TestCheckHookFileManaged(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "commit-msg")
-	if err := os.WriteFile(path, []byte(hookfile.Render()), 0o755); err != nil {
+	if err := os.WriteFile(path, []byte(hookfile.Render(hookBinaryPath())), 0o755); err != nil {
 		t.Fatal(err)
 	}
 	r := checkHookFile(path)
@@ -33,6 +33,17 @@ func TestCheckHookFileForeign(t *testing.T) {
 	}
 }
 
+func TestCheckHookFileWrittenByAnotherBinary(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "commit-msg")
+	if err := os.WriteFile(path, []byte(hookfile.Render("/elsewhere/git-commit-sentinel")), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	r := checkHookFile(path)
+	if r.Level != levelWarn {
+		t.Errorf("checkHookFile(hook for another binary) = %+v, want level WARN", r)
+	}
+}
+
 func TestCheckHookFileMissing(t *testing.T) {
 	r := checkHookFile(filepath.Join(t.TempDir(), "does-not-exist"))
 	if r.Level != levelFail {
@@ -46,7 +57,7 @@ func TestCheckHookFileNotExecutable(t *testing.T) {
 	defer func() { goos = original }()
 
 	path := filepath.Join(t.TempDir(), "commit-msg")
-	if err := os.WriteFile(path, []byte(hookfile.Render()), 0o644); err != nil {
+	if err := os.WriteFile(path, []byte(hookfile.Render(hookBinaryPath())), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	r := checkHookFile(path)
@@ -61,7 +72,7 @@ func TestCheckHookFileNotExecutableOnWindows(t *testing.T) {
 	defer func() { goos = original }()
 
 	path := filepath.Join(t.TempDir(), "commit-msg")
-	if err := os.WriteFile(path, []byte(hookfile.Render()), 0o644); err != nil {
+	if err := os.WriteFile(path, []byte(hookfile.Render(hookBinaryPath())), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	r := checkHookFile(path)
@@ -76,8 +87,8 @@ func TestCheckBinaryOnPathMissing(t *testing.T) {
 	defer func() { lookPath = original }()
 
 	results := checkBinaryOnPath()
-	if len(results) != 1 || results[0].Level != levelFail {
-		t.Errorf("checkBinaryOnPath() = %+v, want a single FAIL", results)
+	if len(results) != 1 || results[0].Level != levelWarn {
+		t.Errorf("checkBinaryOnPath() = %+v, want a single WARN", results)
 	}
 }
 

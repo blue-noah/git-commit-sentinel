@@ -107,13 +107,34 @@ func TestWarnIfBinaryMissingDoesNotPanicWhenAbsent(t *testing.T) {
 
 func TestRunDoctorReturnsNonZeroWhenUnhealthy(t *testing.T) {
 	sandboxHome(t)
+	fakeBinaryOnPath(t)
+	originalGOOS := goos
+	goos = "linux"
+	defer func() { goos = originalGOOS }()
+	repo := tempRepo(t)
+
+	hook := filepath.Join(repo, ".git", "hooks", "commit-msg")
+	if err := os.WriteFile(hook, []byte(hookfile.Render(hookBinaryPath())), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	if code := runDoctor(nil); code != 1 {
+		t.Errorf("runDoctor() with a non-executable hook = %d, want 1", code)
+	}
+}
+
+func TestRunDoctorPassesWithBinaryMissingFromPath(t *testing.T) {
+	sandboxHome(t)
 	original := lookPath
 	lookPath = func(string) (string, error) { return "", errors.New("not found") }
 	defer func() { lookPath = original }()
 	tempRepo(t)
 
-	if code := runDoctor(nil); code != 1 {
-		t.Errorf("runDoctor() with the binary missing from PATH = %d, want 1", code)
+	if code := runSetup([]string{"-scope", "local"}); code != 0 {
+		t.Fatalf("runSetup(-scope local) = %d, want 0", code)
+	}
+	if code := runDoctor(nil); code != 0 {
+		t.Errorf("runDoctor() with the binary missing from PATH = %d, want 0: the hook runs it by full path", code)
 	}
 }
 
@@ -225,7 +246,7 @@ func TestDoctorLocalOverrideRelativePath(t *testing.T) {
 	if err := os.MkdirAll(absDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(absDir, "commit-msg"), []byte(hookfile.Render()), 0o755); err != nil {
+	if err := os.WriteFile(filepath.Join(absDir, "commit-msg"), []byte(hookfile.Render(hookBinaryPath())), 0o755); err != nil {
 		t.Fatal(err)
 	}
 	gitConfigLocal(t, "core.hooksPath", relDir)
