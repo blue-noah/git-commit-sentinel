@@ -114,8 +114,8 @@ func checkGit() []checkResult {
 func checkBinaryOnPath() []checkResult {
 	p, err := lookPath(hookfile.BinaryName)
 	if err != nil {
-		return []checkResult{fail(
-			"%q not found on PATH; the installed hook will fail to run (build/install it, e.g. `go install ./cmd/git-commit-sentinel`)",
+		return []checkResult{warn(
+			"%q not found on PATH: hooks written by `setup` run it by full path, but you can't run it by name",
 			hookfile.BinaryName,
 		)}
 	}
@@ -220,6 +220,9 @@ func checkHookFile(path string) checkResult {
 		if info, err := os.Stat(path); err == nil && info.Mode()&0o111 == 0 {
 			return fail("%s is not executable", path)
 		}
+	}
+	if string(data) != hookfile.Render(hookBinaryPath()) {
+		return warn("%s was written by another git-commit-sentinel binary or version; re-run `git-commit-sentinel setup` to point it at this one", path)
 	}
 	return ok("%s is installed and managed", path)
 }

@@ -193,6 +193,7 @@ revert`.
 | `setup`: "a hook already exists ... not created by git-commit-sentinel" | Another tool owns that hook. Use `-force` only if replacing it is intended. |
 | A repo's hook is silently ignored | Its local `core.hooksPath` may override the global one — `doctor` reports this. |
 | Disable a check | `git config --global commitsentinel.rules.<rule> off` |
+| `git-commit-sentinel: not found` when committing from an IDE or GUI git client | Re-run `git-commit-sentinel setup`. Hooks it writes run the binary by its full path, independent of the app's `PATH`; hooks from v0.0.2 or earlier look it up on `PATH`. |
 | `git-commit-sentinel: command not found` right after installing | The `PATH` change reaches new terminals only — open one (see [Install](#install)). On Windows, restart terminals and IDEs that were already open. |
 | Windows: SmartScreen or antivirus warns about the binary | The release binaries aren't code-signed. The install script verifies the SHA-256 checksum and its download isn't marked by SmartScreen. For a browser download, check it against `SHA256SUMS.txt` (`Get-FileHash <file>`), then `Unblock-File <file>`. |
 | macOS: "cannot be opened because the developer cannot be verified" | The release binaries aren't signed/notarized. Only affects binaries downloaded via a browser (Gatekeeper quarantines them); `curl`/`wget` downloads and `go install`-built binaries are unaffected. Fix: `xattr -d com.apple.quarantine ./git-commit-sentinel-*-darwin-arm64`, or right-click → Open once. |

@@ -25,3 +25,58 @@ jobs:
 
       - name: Test
         run: go test ./...
+
+  # The binary built from this commit, driven through real git commits.
+  e2e:
+    name: e2e (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+
+      - name: Build and put on PATH
+        run: |
+          ext=""
+          if [ "$RUNNER_OS" = "Windows" ]; then ext=".exe"; fi
+          go build -o "$RUNNER_TEMP/gcs-bin/git-commit-sentinel$ext" ./cmd/git-commit-sentinel
+          echo "$RUNNER_TEMP/gcs-bin" >> "$GITHUB_PATH"
+
+      - name: Hook rejects a bad commit and accepts a good one
+        run: sh .github/scripts/install-smoke-hook.sh
+
+      # Like a GUI git client whose PATH lacks the install directory.
+      - name: Hook works without the binary on PATH
+        run: |
+          bin_dir=$(dirname "$(command -v git-commit-sentinel)")
+          PATH=$(printf '%s\n' "$PATH" | tr ':' '\n' | grep -vxF "$bin_dir" | paste -s -d : -)
+          export PATH
+          if command -v git-commit-sentinel; then
+            echo "error: git-commit-sentinel is still on PATH" >&2
+            exit 1
+          fi
+
+          cd "$(mktemp -d)"
+          git init -q
+          if out="$(git commit --allow-empty -m "fixed a bug" 2>&1)"; then
+            echo "error: the hook accepted a non-conventional commit message" >&2
+            exit 1
+          fi
+          echo "$out"
+          case "$out" in
+            *"git-commit-sentinel: error"*) ;;
+            *) echo "error: the commit failed, but not because of the hook" >&2; exit 1 ;;
+          esac
+          git commit -q --allow-empty -m "feat: no PATH needed"

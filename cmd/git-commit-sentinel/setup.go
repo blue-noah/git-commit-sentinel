@@ -108,10 +108,22 @@ func preflightGitVersion(scope string) error {
 func warnIfBinaryMissing() {
 	if _, err := lookPath(hookfile.BinaryName); err != nil {
 		fmt.Fprintf(os.Stderr,
-			"warning: %q was not found on PATH; the installed hook will fail until it is.\n"+
-				"Build and install it first, e.g. `go install ./cmd/git-commit-sentinel`.\n",
+			"note: %q was not found on PATH. The hook runs this binary by its full path,\n"+
+				"so commits are still checked, but you can't run it by name until its directory is on PATH.\n",
 			hookfile.BinaryName)
 	}
+}
+
+var executable = os.Executable
+
+// hookBinaryPath is the path setup writes into the hook: this binary's,
+// with forward slashes, which git for Windows' sh accepts too.
+func hookBinaryPath() string {
+	exe, err := executable()
+	if err != nil {
+		return hookfile.BinaryName
+	}
+	return filepath.ToSlash(exe)
 }
 
 func installForScope(scope, hooksDirFlag string, policy overwritePolicy) (gitcli.Scope, error) {
@@ -198,7 +210,7 @@ func setupLocal(policy overwritePolicy) error {
 }
 
 func installHook(path string, policy overwritePolicy) error {
-	content := hookfile.Render()
+	content := hookfile.Render(hookBinaryPath())
 
 	existing, err := os.ReadFile(path)
 	switch {

@@ -1,9 +1,13 @@
 package main
 
 import (
+	"errors"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"git-commit-sentinel/internal/config"
+	"git-commit-sentinel/internal/hookfile"
 )
 
 func TestOverwritePolicyFrom(t *testing.T) {
@@ -73,5 +77,34 @@ func TestDefaultHooksDirFallsBackToHome(t *testing.T) {
 func TestInstallForScopeRejectsUnknownScope(t *testing.T) {
 	if _, err := installForScope("bogus", "", keepForeign); err == nil {
 		t.Fatal(`installForScope("bogus", ...) = nil error; want an error`)
+	}
+}
+
+func TestHookBinaryPathFallsBackToNameWhenExecutableUnknown(t *testing.T) {
+	original := executable
+	executable = func() (string, error) { return "", errors.New("unknown") }
+	defer func() { executable = original }()
+
+	if got := hookBinaryPath(); got != hookfile.BinaryName {
+		t.Errorf("hookBinaryPath() = %q, want %q", got, hookfile.BinaryName)
+	}
+}
+
+func TestInstallHookUpgradesHookThatUsesPath(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "commit-msg")
+	previous := hookfile.Marker + "\nexec git-commit-sentinel hook \"$1\"\n"
+	if err := os.WriteFile(path, []byte("#!/bin/sh\n"+previous), 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := installHook(path, keepForeign); err != nil {
+		t.Fatalf("installHook() = %v", err)
+	}
+	got, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := hookfile.Render(hookBinaryPath()); string(got) != want {
+		t.Errorf("hook after installHook = %q, want %q", got, want)
 	}
 }
