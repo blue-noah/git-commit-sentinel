@@ -46,7 +46,7 @@ jobs:
       SHELL: /bin/${{ matrix.login_shell }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # The version is resolved with an authenticated call: anonymous API
       # requests from shared runner IPs are rate limited, which would make
@@ -104,7 +104,7 @@ jobs:
         shell: ${{ matrix.shell }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # Same as on unix. Bash avoids Out-File encoding quirks of
       # Windows PowerShell when writing GITHUB_ENV.
@@ -212,7 +212,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install fails with a clear message
         run: |
@@ -239,7 +239,7 @@ jobs:
         shell: ${{ matrix.shell }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install fails with a clear message
         run: |
