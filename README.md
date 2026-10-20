@@ -21,8 +21,8 @@ irm https://raw.githubusercontent.com/blue-noah/git-commit-sentinel/main/scripts
 No Go toolchain, no `sudo`/admin required. Intel Macs and Windows on ARM
 are not supported. Then, in a new terminal: `git-commit-sentinel setup`.
 
-- **Usage**: [docs/MANUAL.md](docs/MANUAL.md) — install, day-to-day
-  behavior, configuration, troubleshooting.
+- **Usage**: [docs/MANUAL.md](docs/MANUAL.md) — install and upgrade,
+  day-to-day behavior, configuration, uninstall, troubleshooting.
 - **Design decisions**: [docs/adr](docs/adr) — why it's built this way.
 - **Docs site**: https://blue-noah.github.io/git-commit-sentinel/ — the same
   essentials, as a short static page.

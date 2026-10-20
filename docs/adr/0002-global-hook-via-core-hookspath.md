@@ -33,5 +33,12 @@ repo's `.git/hooks/commit-msg`.
 - Conflicts with any other tool that also claims `core.hooksPath`
   globally — `setup` refuses to repoint an existing value without
   `-force`.
-- The installed script just `exec`s `git-commit-sentinel hook "$1"` via
-  `PATH`, not a copied binary — upgrading the binary needs no re-setup.
+- The installed script `exec`s the binary, not a copy of it, so upgrading
+  the binary in place needs no re-setup. Since v0.0.3 it runs the binary
+  by the full path `setup` ran from, falling back to `PATH` if that file
+  is gone: git clients started outside a login shell (GUI apps, IDEs)
+  often lack the install directory on `PATH`. Hooks written before that
+  look the binary up on `PATH` until `setup` is re-run.
+- `uninstall` reverses `setup`, touching only the hook carrying its
+  marker, and leaves `core.hooksPath` set while other hooks still live in
+  that directory.
