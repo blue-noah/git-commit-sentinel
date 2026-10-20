@@ -98,6 +98,10 @@ jobs:
         shell: [powershell, pwsh]
     runs-on: windows-latest
     timeout-minutes: 10
+    # A step's `shell` can't use the matrix; the job default can.
+    defaults:
+      run:
+        shell: ${{ matrix.shell }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -115,7 +119,6 @@ jobs:
       # Actions prepends `$ErrorActionPreference = 'stop'` to every
       # PowerShell step, so reset it first or a leak would go unnoticed.
       - name: Install twice, leaving the session untouched
-        shell: ${{ matrix.shell }}
         run: |
           $ErrorActionPreference = "Continue"
           Get-Content -Raw scripts/install.ps1 | Invoke-Expression
@@ -130,7 +133,6 @@ jobs:
           if ($out -ne "git-commit-sentinel $($env:GIT_COMMIT_SENTINEL_VERSION.TrimStart('v'))") { throw "unexpected version: $out" }
 
       - name: User PATH holds the install dir exactly once
-        shell: ${{ matrix.shell }}
         run: |
           $userPath = [Environment]::GetEnvironmentVariable("PATH", "User")
           Write-Host "user PATH: $userPath"
