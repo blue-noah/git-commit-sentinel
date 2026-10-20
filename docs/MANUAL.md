@@ -153,30 +153,56 @@ revert`.
 
 ## Uninstall
 
-1. **Hook and settings** — remove what `setup` created:
+**macOS / Linux:**
 
-   ```sh
-   git-commit-sentinel uninstall
-   ```
+```sh
+curl --proto '=https' --tlsv1.2 -fsSL https://raw.githubusercontent.com/blue-noah/git-commit-sentinel/main/scripts/uninstall.sh | sh
+```
 
-   It deletes the global hook only if git-commit-sentinel wrote it, unsets
-   `core.hooksPath` once that directory holds no other hooks, and removes
-   the global `commitsentinel.*` settings (`-keep-config` keeps them). In
-   each repository set up with `-scope local`, run
-   `git-commit-sentinel uninstall -scope local` as well. Hooks and
-   settings it didn't create are left alone, and running it again is a
-   no-op. Needs v0.0.4 or later: if `uninstall` is an unknown command,
-   upgrade first (see [Install](#install)).
+**Windows (PowerShell):**
 
-2. **Binary** — delete `~/.local/bin/git-commit-sentinel` (macOS/Linux) or
+```powershell
+irm https://raw.githubusercontent.com/blue-noah/git-commit-sentinel/main/scripts/uninstall.ps1 | iex
+```
+
+The scripts undo the installer and `setup`:
+
+- run `git-commit-sentinel uninstall`, which deletes the global hook only
+  if git-commit-sentinel wrote it, unsets `core.hooksPath` once that
+  directory holds no other hooks, and removes the global
+  `commitsentinel.*` settings;
+- delete the binary;
+- remove the install directory from `PATH` (the shell file line, or the
+  user `PATH` entry on Windows), only if nothing else lives there.
+
+Set `GIT_COMMIT_SENTINEL_KEEP_CONFIG=1` to keep the settings, and
+`GIT_COMMIT_SENTINEL_INSTALL_DIR` if you installed elsewhere, the same way
+as for the installer. If `uninstall` is an unknown command (v0.0.3 or
+earlier), the scripts stop without deleting anything: upgrade first (see
+[Install](#install)). Running them again is a no-op.
+
+**Repositories set up with `-scope local`** keep their own hook, which
+fails every commit with "git-commit-sentinel: not found" once the binary
+is gone. Before uninstalling, run `git-commit-sentinel uninstall -scope
+local` inside each of them, or afterwards delete their
+`.git/hooks/commit-msg`.
+
+<details>
+<summary>Uninstalling by hand</summary>
+
+1. `git-commit-sentinel uninstall` (add `-keep-config` to keep the
+   settings), and `git-commit-sentinel uninstall -scope local` in each
+   repository set up with `-scope local`.
+2. Delete `~/.local/bin/git-commit-sentinel` (macOS/Linux) or
    `%USERPROFILE%\bin\git-commit-sentinel.exe` (Windows), or wherever
    `GIT_COMMIT_SENTINEL_INSTALL_DIR` pointed.
-
-3. **`PATH`** — only if nothing else lives in that directory: remove the
-   line the installer added to your shell file (`~/.zshrc`, `~/.bashrc`,
+3. Only if nothing else lives in that directory: remove the line the
+   installer added to your shell file (`~/.zshrc`, `~/.bashrc`,
    `~/.bash_profile`, `~/.profile` or fish's `config.fish`), or on Windows
    the entry in the user `PATH` (Settings → System → About → Advanced
    system settings → Environment Variables).
+
+</details>
 
 ## Troubleshooting
 
@@ -185,6 +211,7 @@ revert`.
 | Hook doesn't run | `doctor`. If `core.hooksPath` isn't set, run `setup`. |
 | `git-commit-sentinel: command not found` right after installing | The `PATH` change reaches new terminals only — open one (see [Install](#install)). On Windows, restart terminals and IDEs that were already open. |
 | `git-commit-sentinel: not found` when committing from an IDE or GUI git client | Re-run `git-commit-sentinel setup`. Hooks it writes run the binary by its full path, independent of the app's `PATH`; hooks from v0.0.2 or earlier look it up on `PATH`. |
+| `git-commit-sentinel: not found` on every commit in one repository, after uninstalling | That repository was set up with `-scope local` and kept its hook: delete its `.git/hooks/commit-msg`. |
 | `doctor`: binary not on PATH | Hooks written by `setup` still work, since they run the binary by full path. To run it by name, open a new terminal or re-run the install script (see [Install](#install)). |
 | `doctor`: hook "was written by another git-commit-sentinel binary or version" | Re-run `git-commit-sentinel setup`, with `-scope local` for a repository's own hook. |
 | A repo's hook is silently ignored | Its local `core.hooksPath` may override the global one — `doctor` reports this. |

@@ -16,7 +16,8 @@ const uninstallUsage = `usage: git-commit-sentinel uninstall [flags]
 Removes what setup installed: the commit-msg hook it wrote, the global
 core.hooksPath pointing at that hook's directory, and the commitsentinel
 settings. Hooks and settings it didn't create are left alone. The binary
-itself stays: delete it afterwards (the manual has the full steps).
+itself stays: the uninstall scripts run this command, then delete the
+binary and its PATH entry (see the manual).
 
 Flags:
   -scope global|local   what to remove (default "global"; "local" acts on

@@ -1,13 +1,15 @@
 name: install-smoke
 
 # Runs the install scripts from this checkout, piped the way the README
-# does, against the latest published release, then checks that git runs
-# the hook on a real commit on each OS.
+# does, against the latest published release, checks that git runs the
+# hook on a real commit on each OS, then runs the uninstall scripts.
 on:
   pull_request:
     paths:
       - scripts/install.sh
       - scripts/install.ps1
+      - scripts/uninstall.sh
+      - scripts/uninstall.ps1
       - .github/scripts/install-smoke-hook.sh
       - .github/workflows/install-smoke.yml
   push:
@@ -15,6 +17,8 @@ on:
     paths:
       - scripts/install.sh
       - scripts/install.ps1
+      - scripts/uninstall.sh
+      - scripts/uninstall.ps1
       - .github/scripts/install-smoke-hook.sh
       - .github/workflows/install-smoke.yml
   workflow_dispatch:
@@ -88,6 +92,39 @@ jobs:
 
       - name: Hook rejects a bad commit and accepts a good one
         run: sh .github/scripts/install-smoke-hook.sh
+
+      - name: Uninstall removes the hook, settings, binary and PATH line
+        run: |
+          git config --global commitsentinel.types feat,fix
+          cat scripts/uninstall.sh | sh
+
+          if [ -e "$GIT_COMMIT_SENTINEL_INSTALL_DIR" ]; then
+            echo "error: $GIT_COMMIT_SENTINEL_INSTALL_DIR still exists" >&2
+            exit 1
+          fi
+          for key in core.hooksPath commitsentinel.types; do
+            if git config --global --get "$key"; then
+              echo "error: global $key is still set" >&2
+              exit 1
+            fi
+          done
+          for f in .zshrc .bashrc .bash_profile .bash_login .profile .config/fish/config.fish; do
+            if [ -f "$HOME/$f" ] && grep -F "$GIT_COMMIT_SENTINEL_INSTALL_DIR" "$HOME/$f"; then
+              echo "error: $f still references the install dir" >&2
+              exit 1
+            fi
+          done
+          if ${{ matrix.new_shell }} 'command -v git-commit-sentinel'; then
+            echo "error: a new terminal still finds git-commit-sentinel" >&2
+            exit 1
+          fi
+
+          cd "$(mktemp -d)"
+          git init -q
+          git commit -q --allow-empty -m "fixed a bug"
+
+      - name: Uninstall again (no-op)
+        run: cat scripts/uninstall.sh | sh
 
   install-windows:
     name: install (windows-latest, ${{ matrix.shell }})
@@ -200,6 +237,38 @@ jobs:
       - name: Hook rejects a bad commit and accepts a good one
         shell: bash
         run: sh .github/scripts/install-smoke-hook.sh
+
+      - name: Uninstall removes the hook, settings, binary and PATH entry
+        run: |
+          $ErrorActionPreference = "Continue"
+          git config --global commitsentinel.types feat,fix
+          Get-Content -Raw scripts/uninstall.ps1 | Invoke-Expression
+          if ($ErrorActionPreference -ne "Continue") { throw "ErrorActionPreference leaked: $ErrorActionPreference" }
+
+          $dir = $env:GIT_COMMIT_SENTINEL_INSTALL_DIR
+          if (Test-Path -LiteralPath $dir) { throw "$dir still exists" }
+          foreach ($key in "core.hooksPath", "commitsentinel.types") {
+            git config --global --get $key
+            if ($LASTEXITCODE -eq 0) { throw "global $key is still set" }
+          }
+
+          $key = [Microsoft.Win32.Registry]::CurrentUser.OpenSubKey("Environment")
+          $raw = $key.GetValue("Path", "", [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames)
+          $kind = $key.GetValueKind("Path")
+          $key.Close()
+          Write-Host "user PATH ($kind): $raw"
+          if (@($raw -split ";" | Where-Object { $_.TrimEnd("\") -eq $dir }).Count -ne 0) { throw "the install dir is still in the user PATH" }
+          if ($raw -notlike "*%GCS_SMOKE_HOME%\bin*") { throw "the %GCS_SMOKE_HOME% reference was lost or expanded" }
+          if ($kind -ne "ExpandString") { throw "user PATH must stay REG_EXPAND_SZ, is $kind" }
+          if (@($env:Path -split ";" | Where-Object { $_.TrimEnd("\") -eq $dir }).Count -ne 0) { throw "session PATH still holds the install dir" }
+
+          $repo = Join-Path $env:RUNNER_TEMP "uninstalled-repo"
+          git init -q $repo
+          git -C $repo commit -q --allow-empty -m "fixed a bug"
+          if ($LASTEXITCODE -ne 0) { throw "commit failed after uninstall" }
+
+      - name: Uninstall again (no-op)
+        run: Get-Content -Raw scripts/uninstall.ps1 | Invoke-Expression
 
   unsupported-macos-intel:
     name: install refuses (macos-15-intel)
