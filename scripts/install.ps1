@@ -9,17 +9,15 @@
 #   $env:GIT_COMMIT_SENTINEL_VERSION = "v0.0.1"          install a specific release (default: latest)
 #   $env:GIT_COMMIT_SENTINEL_INSTALL_DIR = "C:\some\dir" install location (default: $HOME\bin)
 #
-# Keep this file ASCII-only: Windows PowerShell 5.1 reads a script file
-# without a BOM as Windows-1252, where the UTF-8 bytes of characters like
-# an em dash turn into a typographic quote that ends a string early.
+# Keep this file ASCII-only: Windows PowerShell 5.1 reads it as
+# Windows-1252, where UTF-8 punctuation can turn into a closing quote.
 
 # `irm | iex` runs this in the caller's session: the script block keeps
 # $ErrorActionPreference and every variable below out of it. $env:Path
 # is process-wide, so the update at the end still reaches the session.
 & {
     $ErrorActionPreference = "Stop"
-    # Windows PowerShell 5.1 redraws the progress bar for every chunk it
-    # downloads, which slows the download down several times over.
+    # Windows PowerShell 5.1 redraws the progress bar per chunk, slowing downloads.
     $ProgressPreference = "SilentlyContinue"
 
     $Repo = "blue-noah/git-commit-sentinel"
@@ -42,11 +40,9 @@
         }
     }
 
-    # GitHub requires TLS 1.2. Every Windows the binary runs on supports it,
-    # but Windows PowerShell 5.1 downloads through .NET's ServicePointManager,
-    # which can be pinned to a protocol list without it (0 = SystemDefault,
-    # i.e. let Windows choose). PowerShell 7 doesn't use that setting. The
-    # fix is left to the user, so the script doesn't change their session.
+    # Only Windows PowerShell 5.1 downloads through ServicePointManager, which
+    # can be pinned to protocols GitHub refuses (0 = SystemDefault: Windows
+    # chooses). The fix is left to the user so their session isn't changed.
     if ($PSVersionTable.PSEdition -eq "Desktop") {
         $protocols = [Net.ServicePointManager]::SecurityProtocol
         # 3072 = Tls12, 12288 = Tls13 (numeric: older .NET lacks the Tls13 name).
@@ -57,9 +53,8 @@
         }
     }
 
-    # -UseBasicParsing on every web call: without it Windows PowerShell 5.1
-    # needs the Internet Explorer engine, missing on Server Core and on
-    # systems where IE was never set up. PowerShell 7 accepts and ignores it.
+    # -UseBasicParsing: without it Windows PowerShell 5.1 needs the Internet
+    # Explorer engine, missing on Server Core. PowerShell 7 ignores it.
     $Version = $env:GIT_COMMIT_SENTINEL_VERSION
     if (-not $Version) {
         try {
@@ -77,7 +72,6 @@
     }
 
     $VersionNum = $Version.TrimStart("v")
-    # Release tags always carry the "v" prefix; accept VERSION with or without it.
     $Version = "v$VersionNum"
     $File = "git-commit-sentinel-$VersionNum-windows-$Arch.exe"
     $BaseUrl = "https://github.com/$Repo/releases/download/$Version"
@@ -119,7 +113,6 @@
 
     # Idempotent PATH check: only touch the persisted user PATH if InstallDir
     # isn't already in it, so re-running this script never duplicates it.
-    # Entries compare expanded, case-insensitively, ignoring a trailing "\".
     $normalize = { param($entry) [Environment]::ExpandEnvironmentVariables($entry).TrimEnd("\") }
     $target = & $normalize $InstallDir
 
