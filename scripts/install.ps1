@@ -8,6 +8,10 @@
 # Env overrides:
 #   $env:GIT_COMMIT_SENTINEL_VERSION = "v0.0.1"          install a specific release (default: latest)
 #   $env:GIT_COMMIT_SENTINEL_INSTALL_DIR = "C:\some\dir" install location (default: $HOME\bin)
+#
+# Keep this file ASCII-only: Windows PowerShell 5.1 reads a script file
+# without a BOM as Windows-1252, where the UTF-8 bytes of characters like
+# an em dash turn into a typographic quote that ends a string early.
 
 # `irm | iex` runs this in the caller's session: the script block keeps
 # $ErrorActionPreference and every variable below out of it. $env:Path
@@ -73,7 +77,7 @@
     if ($pathEntries -notcontains $InstallDir) {
         $newPath = if ($currentPath) { "$currentPath;$InstallDir" } else { $InstallDir }
         [Environment]::SetEnvironmentVariable("PATH", $newPath, "User")
-        Write-Host "==> added $InstallDir to your user PATH — restart your terminal for it to take effect"
+        Write-Host "==> added $InstallDir to your user PATH - restart your terminal for it to take effect"
     }
     else {
         Write-Host "==> $InstallDir is already on your user PATH"
