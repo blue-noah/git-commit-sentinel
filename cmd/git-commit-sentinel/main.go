@@ -25,7 +25,8 @@ Configuration lives in git config, under the "commitsentinel" section:
   git config --global commitsentinel.headerMaxLength 72
   git config --global commitsentinel.rules.<rule> off|warn|error
 
-See README.md for the full list of rules.
+Run "git-commit-sentinel doctor" to list every rule with its effective level.
+Manual: https://github.com/blue-noah/git-commit-sentinel/blob/main/docs/MANUAL.md
 `
 
 func main() {
