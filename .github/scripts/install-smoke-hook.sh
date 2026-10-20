@@ -9,7 +9,6 @@ git config --global user.name "install-smoke"
 git config --global user.email "install-smoke@example.invalid"
 
 git-commit-sentinel setup
-git-commit-sentinel doctor
 
 repo="$(mktemp -d)"
 cd "$repo"
@@ -30,3 +29,6 @@ esac
 
 git commit -q --allow-empty -m "feat: smoke test"
 echo "==> hook rejected the bad message and accepted the good one"
+
+# Last, so a doctor false positive can't hide whether the hook works.
+git-commit-sentinel doctor
