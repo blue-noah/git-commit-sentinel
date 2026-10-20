@@ -1,0 +1,150 @@
+name: install-smoke
+
+# Runs the install scripts from this checkout, piped the way the README
+# does, against the latest published release, then checks that git runs
+# the hook on a real commit on each OS.
+on:
+  pull_request:
+    paths:
+      - scripts/install.sh
+      - scripts/install.ps1
+      - .github/scripts/install-smoke-hook.sh
+      - .github/workflows/install-smoke.yml
+  push:
+    branches: [main]
+    paths:
+      - scripts/install.sh
+      - scripts/install.ps1
+      - .github/scripts/install-smoke-hook.sh
+      - .github/workflows/install-smoke.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  install-unix:
+    name: install (${{ matrix.os }}, ${{ matrix.login_shell }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # new_shell is how a freshly opened terminal starts on that OS:
+          # interactive non-login on Linux, interactive login on macOS.
+          - os: ubuntu-latest
+            login_shell: bash
+            new_shell: bash -ic
+          - os: macos-latest
+            login_shell: zsh
+            new_shell: zsh -lic
+          - os: macos-latest
+            login_shell: bash
+            new_shell: bash -lic
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    env:
+      SHELL: /bin/${{ matrix.login_shell }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # The version is resolved with an authenticated call: anonymous API
+      # requests from shared runner IPs are rate limited, which would make
+      # this flaky. The install dir is outside the runner's default PATH,
+      # so the rc-file branch of the script runs.
+      - name: Prepare
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "GIT_COMMIT_SENTINEL_VERSION=$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName -q .tagName)" >> "$GITHUB_ENV"
+          echo "GIT_COMMIT_SENTINEL_INSTALL_DIR=$RUNNER_TEMP/gcs-bin" >> "$GITHUB_ENV"
+
+      - name: Install
+        run: cat scripts/install.sh | sh
+
+      - name: Install again (idempotent)
+        run: cat scripts/install.sh | sh
+
+      - name: PATH is added to exactly one rc file, once
+        run: |
+          count=0
+          for f in .zshrc .bashrc .bash_profile .bash_login .profile .config/fish/config.fish; do
+            if [ -f "$HOME/$f" ]; then
+              n=$(grep -cF "$GIT_COMMIT_SENTINEL_INSTALL_DIR" "$HOME/$f" || true)
+              echo "$f: $n"
+              count=$((count + n))
+            fi
+          done
+          test "$count" -eq 1
+
+      - name: A new terminal finds the binary
+        run: |
+          out=$(${{ matrix.new_shell }} 'git-commit-sentinel version' 2>/dev/null | tail -n 1)
+          echo "$out"
+          test "$out" = "git-commit-sentinel ${GIT_COMMIT_SENTINEL_VERSION#v}"
+
+      - name: Put the binary on PATH for the next step
+        run: echo "$GIT_COMMIT_SENTINEL_INSTALL_DIR" >> "$GITHUB_PATH"
+
+      - name: Hook rejects a bad commit and accepts a good one
+        run: sh .github/scripts/install-smoke-hook.sh
+
+  install-windows:
+    name: install (windows-latest, ${{ matrix.shell }})
+    strategy:
+      fail-fast: false
+      matrix:
+        # powershell = Windows PowerShell 5.1, pwsh = PowerShell 7.
+        shell: [powershell, pwsh]
+    runs-on: windows-latest
+    timeout-minutes: 10
+    # A step's `shell` can't use the matrix; the job default can.
+    defaults:
+      run:
+        shell: ${{ matrix.shell }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Same as on unix. Bash avoids Out-File encoding quirks of
+      # Windows PowerShell when writing GITHUB_ENV.
+      - name: Prepare
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "GIT_COMMIT_SENTINEL_VERSION=$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName -q .tagName)" >> "$GITHUB_ENV"
+          echo "GIT_COMMIT_SENTINEL_INSTALL_DIR=$RUNNER_TEMP\\gcs-bin" >> "$GITHUB_ENV"
+
+      # Actions prepends `$ErrorActionPreference = 'stop'` to every
+      # PowerShell step, so reset it first or a leak would go unnoticed.
+      - name: Install twice, leaving the session untouched
+        run: |
+          $ErrorActionPreference = "Continue"
+          Get-Content -Raw scripts/install.ps1 | Invoke-Expression
+          Get-Content -Raw scripts/install.ps1 | Invoke-Expression
+          if ($ErrorActionPreference -ne "Continue") { throw "ErrorActionPreference leaked: $ErrorActionPreference" }
+          foreach ($name in "Version", "Tmp", "InstallDir") {
+            if (Get-Variable -Name $name -ErrorAction SilentlyContinue) { throw "variable `$$name leaked into the session" }
+          }
+          if ($env:Path -notlike "*$env:GIT_COMMIT_SENTINEL_INSTALL_DIR*") { throw "session PATH was not updated" }
+          $out = git-commit-sentinel version
+          Write-Host $out
+          if ($out -ne "git-commit-sentinel $($env:GIT_COMMIT_SENTINEL_VERSION.TrimStart('v'))") { throw "unexpected version: $out" }
+
+      - name: User PATH holds the install dir exactly once
+        run: |
+          $userPath = [Environment]::GetEnvironmentVariable("PATH", "User")
+          Write-Host "user PATH: $userPath"
+          $count = @($userPath -split ";" | Where-Object { $_ -eq $env:GIT_COMMIT_SENTINEL_INSTALL_DIR }).Count
+          if ($count -ne 1) { throw "expected the install dir once in the user PATH, found $count" }
+
+      - name: Put the binary on PATH for the next step
+        shell: bash
+        run: echo "$GIT_COMMIT_SENTINEL_INSTALL_DIR" >> "$GITHUB_PATH"
+
+      # Git for Windows runs the #!/bin/sh hook through its own sh, which
+      # must resolve git-commit-sentinel to the .exe on PATH.
+      - name: Hook rejects a bad commit and accepts a good one
+        shell: bash
+        run: sh .github/scripts/install-smoke-hook.sh
