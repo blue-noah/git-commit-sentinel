@@ -41,6 +41,10 @@ func TestCheckHookFileMissing(t *testing.T) {
 }
 
 func TestCheckHookFileNotExecutable(t *testing.T) {
+	original := goos
+	goos = "linux"
+	defer func() { goos = original }()
+
 	path := filepath.Join(t.TempDir(), "commit-msg")
 	if err := os.WriteFile(path, []byte(hookfile.Render()), 0o644); err != nil {
 		t.Fatal(err)
@@ -48,6 +52,21 @@ func TestCheckHookFileNotExecutable(t *testing.T) {
 	r := checkHookFile(path)
 	if r.Level != levelFail {
 		t.Errorf("checkHookFile(not executable) = %+v, want level FAIL", r)
+	}
+}
+
+func TestCheckHookFileNotExecutableOnWindows(t *testing.T) {
+	original := goos
+	goos = "windows"
+	defer func() { goos = original }()
+
+	path := filepath.Join(t.TempDir(), "commit-msg")
+	if err := os.WriteFile(path, []byte(hookfile.Render()), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	r := checkHookFile(path)
+	if r.Level != levelOK {
+		t.Errorf("checkHookFile(no executable bit, windows) = %+v, want level OK", r)
 	}
 }
 

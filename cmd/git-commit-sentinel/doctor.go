@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 
 	"git-commit-sentinel/internal/config"
 	"git-commit-sentinel/internal/conventionalcommit"
@@ -15,6 +16,10 @@ import (
 )
 
 var lookPath = exec.LookPath
+
+// goos is runtime.GOOS, overridable so tests can cover the Windows branch
+// on any platform.
+var goos = runtime.GOOS
 
 type checkLevel int
 
@@ -212,8 +217,12 @@ func checkHookFile(path string) checkResult {
 	if !hookfile.IsManaged(string(data)) {
 		return warn("%s exists but was not created by git-commit-sentinel", path)
 	}
-	if info, err := os.Stat(path); err == nil && info.Mode()&0o111 == 0 {
-		return fail("%s is not executable", path)
+	// Windows has no executable bit: Go never reports one there, and git
+	// for Windows runs the hook through its own sh regardless.
+	if goos != "windows" {
+		if info, err := os.Stat(path); err == nil && info.Mode()&0o111 == 0 {
+			return fail("%s is not executable", path)
+		}
 	}
 	return ok("%s is installed and managed", path)
 }
