@@ -82,19 +82,40 @@
 
     # Idempotent PATH check: only touch the persisted user PATH if InstallDir
     # isn't already in it, so re-running this script never duplicates it.
-    $currentPath = [Environment]::GetEnvironmentVariable("PATH", "User")
-    $pathEntries = @()
-    if ($currentPath) { $pathEntries = $currentPath -split ";" }
+    # Entries compare expanded, case-insensitively, ignoring a trailing "\".
+    $normalize = { param($entry) [Environment]::ExpandEnvironmentVariables($entry).TrimEnd("\") }
+    $target = & $normalize $InstallDir
 
-    if ($pathEntries -notcontains $InstallDir) {
-        $newPath = if ($currentPath) { "$currentPath;$InstallDir" } else { $InstallDir }
-        [Environment]::SetEnvironmentVariable("PATH", $newPath, "User")
-        Write-Host "==> added $InstallDir to your user PATH - restart your terminal for it to take effect"
+    # The user PATH is read and written as the raw registry value, not via
+    # [Environment]::Get/SetEnvironmentVariable: those return it with %VAR%
+    # references expanded and write it back as plain text, which would
+    # freeze entries like %JAVA_HOME%\bin to today's values.
+    $envKey = [Microsoft.Win32.Registry]::CurrentUser.CreateSubKey("Environment")
+    try {
+        $currentPath = $envKey.GetValue("Path", "", [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames)
+        $pathEntries = @($currentPath -split ";" | Where-Object { $_ } | ForEach-Object { & $normalize $_ })
+
+        if ($pathEntries -notcontains $target) {
+            $newPath = if ($currentPath) { "$($currentPath.TrimEnd(';'));$InstallDir" } else { $InstallDir }
+            $envKey.SetValue("Path", $newPath, [Microsoft.Win32.RegistryValueKind]::ExpandString)
+            # A direct registry write doesn't notify running programs, so
+            # terminals opened later from Explorer wouldn't see the new PATH
+            # until the next logon. Setting and removing a throwaway user
+            # variable makes .NET broadcast that notification for us.
+            [Environment]::SetEnvironmentVariable("GIT_COMMIT_SENTINEL_PATH_REFRESH", "1", "User")
+            [Environment]::SetEnvironmentVariable("GIT_COMMIT_SENTINEL_PATH_REFRESH", $null, "User")
+            Write-Host "==> added $InstallDir to your user PATH - restart your terminal for it to take effect"
+        }
+        else {
+            Write-Host "==> $InstallDir is already on your user PATH"
+        }
     }
-    else {
-        Write-Host "==> $InstallDir is already on your user PATH"
+    finally {
+        $envKey.Close()
     }
-    if ($env:Path -notlike "*$InstallDir*") {
+
+    $sessionEntries = @($env:Path -split ";" | Where-Object { $_ } | ForEach-Object { & $normalize $_ })
+    if ($sessionEntries -notcontains $target) {
         $env:Path += ";$InstallDir"
     }
 
