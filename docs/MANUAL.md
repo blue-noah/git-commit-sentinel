@@ -148,36 +148,25 @@ revert`.
 
 ## Uninstall
 
-1. **Global hook** — check that `core.hooksPath` points to
-   git-commit-sentinel's directory, then unset it and remove the directory:
+1. **Hook and settings** — remove what `setup` created:
 
    ```sh
-   git config --global core.hooksPath   # expect .../git-commit-sentinel/hooks
-   git config --global --unset core.hooksPath
-   rm -rf ~/.config/git-commit-sentinel   # $XDG_CONFIG_HOME/git-commit-sentinel if set
+   git-commit-sentinel uninstall
    ```
 
-   On Windows the directory is `%USERPROFILE%\.config\git-commit-sentinel`.
+   It deletes the global hook only if git-commit-sentinel wrote it, unsets
+   `core.hooksPath` once that directory holds no other hooks, and removes
+   the global `commitsentinel.*` settings (`-keep-config` keeps them). In
+   each repository set up with `-scope local`, run
+   `git-commit-sentinel uninstall -scope local` as well. Hooks and
+   settings it didn't create are left alone, and running it again is a
+   no-op.
 
-2. **Per-repository hooks** — in each repository set up with
-   `-scope local`, delete `.git/hooks/commit-msg`.
-
-3. **Configuration** — if you set any `commitsentinel.*` keys (rule levels
-   live in a section of their own, so remove both; git reports "no such
-   section" for one you never set):
-
-   ```sh
-   git config --global --remove-section commitsentinel
-   git config --global --remove-section commitsentinel.rules
-   ```
-
-   Run the same without `--global` inside repositories with local settings.
-
-4. **Binary** — delete `~/.local/bin/git-commit-sentinel` (macOS/Linux) or
+2. **Binary** — delete `~/.local/bin/git-commit-sentinel` (macOS/Linux) or
    `%USERPROFILE%\bin\git-commit-sentinel.exe` (Windows), or wherever
    `GIT_COMMIT_SENTINEL_INSTALL_DIR` pointed.
 
-5. **`PATH`** — only if nothing else lives in that directory: remove the
+3. **`PATH`** — only if nothing else lives in that directory: remove the
    line the installer added to your shell file (`~/.zshrc`, `~/.bashrc`,
    `~/.bash_profile`, `~/.profile` or fish's `config.fish`), or on Windows
    the entry in the user `PATH` (Settings → System → About → Advanced

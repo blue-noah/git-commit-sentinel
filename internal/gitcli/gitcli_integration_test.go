@@ -116,3 +116,39 @@ func TestExecSetPropagatesRealGitFailure(t *testing.T) {
 		t.Fatal("execSet(invalid key) = nil error; want git itself to reject it")
 	}
 }
+
+func TestRemoveSectionAndConfigUnsetAgainstRealGit(t *testing.T) {
+	tempRepo(t)
+	for _, kv := range [][2]string{
+		{"commitsentinel.types", "feat"},
+		{"commitsentinel.rules.type", "off"},
+		{"core.hookspath", "/some/hooks"},
+	} {
+		if err := execSet([]string{"config", "--local", kv[0], kv[1]}); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	for _, section := range []string{"commitsentinel", "commitsentinel.rules"} {
+		removed, err := RemoveSection(ScopeLocal, section)
+		if err != nil || !removed {
+			t.Fatalf("RemoveSection(%s) = %v, %v; want true, nil", section, removed, err)
+		}
+	}
+	if removed, err := RemoveSection(ScopeLocal, "commitsentinel"); err != nil || removed {
+		t.Errorf("RemoveSection(already removed) = %v, %v; want false, nil", removed, err)
+	}
+	if err := ConfigUnset(ScopeLocal, "core.hooksPath"); err != nil {
+		t.Fatalf("ConfigUnset() error = %v", err)
+	}
+	if err := ConfigUnset(ScopeLocal, "core.hooksPath"); err != nil {
+		t.Errorf("ConfigUnset(already unset) error = %v; want nil", err)
+	}
+
+	out, _ := exec.Command("git", "config", "--local", "--list").Output()
+	for _, gone := range []string{"commitsentinel.", "core.hookspath"} {
+		if strings.Contains(string(out), gone) {
+			t.Errorf("local config still contains %q:\n%s", gone, out)
+		}
+	}
+}
