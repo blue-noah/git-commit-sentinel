@@ -22,10 +22,22 @@
     $Repo = "blue-noah/git-commit-sentinel"
     $InstallDir = if ($env:GIT_COMMIT_SENTINEL_INSTALL_DIR) { $env:GIT_COMMIT_SENTINEL_INSTALL_DIR } else { Join-Path $HOME "bin" }
 
-    if (-not [Environment]::Is64BitOperatingSystem) {
-        throw "error: unsupported architecture (only 64-bit Windows is published)"
+    # Win32_Processor reports the hardware architecture even when this
+    # PowerShell runs under x64 emulation on ARM64, where
+    # $env:PROCESSOR_ARCHITECTURE would say AMD64.
+    $cpuArch = (Get-CimInstance -ClassName Win32_Processor | Select-Object -First 1).Architecture
+    switch ($cpuArch) {
+        9 { $Arch = "amd64" }
+        12 {
+            throw ("error: Windows on ARM is not supported.`n" +
+                "git-commit-sentinel is published for 64-bit Intel/AMD Windows (x64) only,`n" +
+                "so there is no binary to install on this machine.")
+        }
+        default {
+            throw ("error: unsupported processor architecture (Win32_Processor.Architecture = $cpuArch).`n" +
+                "git-commit-sentinel is published for 64-bit Intel/AMD Windows (x64) only.")
+        }
     }
-    $Arch = "amd64"
 
     $Version = $env:GIT_COMMIT_SENTINEL_VERSION
     if (-not $Version) {

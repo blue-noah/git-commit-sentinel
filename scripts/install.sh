@@ -37,8 +37,18 @@ case "$arch" in
 esac
 
 if [ "$goos" = "darwin" ] && [ "$goarch" = "amd64" ]; then
-	echo "error: no darwin/amd64 build is published (only darwin/arm64, i.e. Apple Silicon)" >&2
-	exit 1
+	# A shell running under Rosetta reports x86_64 on Apple Silicon too;
+	# the arm64 build runs there natively.
+	if [ "$(sysctl -n hw.optional.arm64 2>/dev/null)" = "1" ]; then
+		goarch="arm64"
+	else
+		cat >&2 <<-'EOF'
+			error: Intel Macs are not supported.
+			git-commit-sentinel is published for Apple Silicon Macs (arm64) only,
+			so there is no binary to install on this machine.
+		EOF
+		exit 1
+	fi
 fi
 
 if [ -z "$VERSION" ]; then

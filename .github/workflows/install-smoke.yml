@@ -148,3 +148,52 @@ jobs:
       - name: Hook rejects a bad commit and accepts a good one
         shell: bash
         run: sh .github/scripts/install-smoke-hook.sh
+
+  # Platforms without a published build: the installers must stop before
+  # downloading anything, with a message that says so.
+  unsupported-macos-intel:
+    name: install refuses (macos-15-intel)
+    runs-on: macos-15-intel
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install fails with a clear message
+        run: |
+          if out=$(cat scripts/install.sh | sh 2>&1); then
+            echo "error: install.sh succeeded on an Intel Mac" >&2
+            exit 1
+          fi
+          echo "$out"
+          case "$out" in
+            *"Intel Macs are not supported"*) ;;
+            *) exit 1 ;;
+          esac
+
+  unsupported-windows-arm:
+    name: install refuses (windows-11-arm, ${{ matrix.shell }})
+    strategy:
+      fail-fast: false
+      matrix:
+        shell: [powershell, pwsh]
+    runs-on: windows-11-arm
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: ${{ matrix.shell }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install fails with a clear message
+        run: |
+          $ErrorActionPreference = "Continue"
+          try {
+            Get-Content -Raw scripts/install.ps1 | Invoke-Expression
+            throw "install.ps1 succeeded on Windows on ARM"
+          }
+          catch {
+            Write-Host $_.Exception.Message
+            if ($_.Exception.Message -notlike "*Windows on ARM is not supported*") { throw }
+          }
