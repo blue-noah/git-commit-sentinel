@@ -6,20 +6,20 @@
 #   irm https://raw.githubusercontent.com/blue-noah/git-commit-sentinel/main/scripts/install.ps1 | iex
 #
 # Env overrides:
-#   $env:VERSION = "v0.0.1"          install a specific release (default: latest)
-#   $env:INSTALL_DIR = "C:\some\dir" install location (default: $HOME\bin)
+#   $env:GIT_COMMIT_SENTINEL_VERSION = "v0.0.1"          install a specific release (default: latest)
+#   $env:GIT_COMMIT_SENTINEL_INSTALL_DIR = "C:\some\dir" install location (default: $HOME\bin)
 
 $ErrorActionPreference = "Stop"
 
 $Repo = "blue-noah/git-commit-sentinel"
-$InstallDir = if ($env:INSTALL_DIR) { $env:INSTALL_DIR } else { Join-Path $HOME "bin" }
+$InstallDir = if ($env:GIT_COMMIT_SENTINEL_INSTALL_DIR) { $env:GIT_COMMIT_SENTINEL_INSTALL_DIR } else { Join-Path $HOME "bin" }
 
 if (-not [Environment]::Is64BitOperatingSystem) {
     throw "error: unsupported architecture (only 64-bit Windows is published)"
 }
 $Arch = "amd64"
 
-$Version = $env:VERSION
+$Version = $env:GIT_COMMIT_SENTINEL_VERSION
 if (-not $Version) {
     $release = Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/releases/latest"
     $Version = $release.tag_name

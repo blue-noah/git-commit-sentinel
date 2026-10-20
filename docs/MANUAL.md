@@ -20,9 +20,23 @@ curl --proto '=https' --tlsv1.2 -fsSL https://raw.githubusercontent.com/blue-noa
 irm https://raw.githubusercontent.com/blue-noah/git-commit-sentinel/main/scripts/install.ps1 | iex
 ```
 
-Installs to `~/.local/bin` (macOS/Linux) or `%USERPROFILE%\bin` (Windows)
-by default; override with `INSTALL_DIR` (`$env:INSTALL_DIR` on Windows).
-Safe to re-run — won't duplicate a `PATH` entry that's already there.
+Installs the latest release to `~/.local/bin` (macOS/Linux) or
+`%USERPROFILE%\bin` (Windows). Safe to re-run — won't duplicate a `PATH`
+entry that's already there.
+
+To pick a specific release or install location, set
+`GIT_COMMIT_SENTINEL_VERSION` and/or `GIT_COMMIT_SENTINEL_INSTALL_DIR`. On
+macOS/Linux set them on `sh`, after the pipe — before `curl` they would
+only reach `curl`:
+
+```sh
+curl --proto '=https' --tlsv1.2 -fsSL https://raw.githubusercontent.com/blue-noah/git-commit-sentinel/main/scripts/install.sh | GIT_COMMIT_SENTINEL_VERSION=v0.0.1 GIT_COMMIT_SENTINEL_INSTALL_DIR="$HOME/bin" sh
+```
+
+```powershell
+$env:GIT_COMMIT_SENTINEL_VERSION = "v0.0.1"; $env:GIT_COMMIT_SENTINEL_INSTALL_DIR = "C:\tools\bin"
+irm https://raw.githubusercontent.com/blue-noah/git-commit-sentinel/main/scripts/install.ps1 | iex
+```
 
 <details>
 <summary>Manual download, or building from source</summary>

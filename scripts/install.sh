@@ -6,13 +6,14 @@
 # Usage:
 #   curl --proto '=https' --tlsv1.2 -fsSL https://raw.githubusercontent.com/blue-noah/git-commit-sentinel/main/scripts/install.sh | sh
 #
-# Env overrides:
-#   VERSION=v0.0.1        install a specific release (default: latest)
-#   INSTALL_DIR=/some/dir install location (default: $HOME/.local/bin)
+# Env overrides (set them on `sh`, after the pipe: `curl ... | GIT_COMMIT_SENTINEL_VERSION=v0.0.1 sh`):
+#   GIT_COMMIT_SENTINEL_VERSION=v0.0.1        install a specific release (default: latest)
+#   GIT_COMMIT_SENTINEL_INSTALL_DIR=/some/dir install location (default: $HOME/.local/bin)
 set -eu
 
 REPO="blue-noah/git-commit-sentinel"
-INSTALL_DIR="${INSTALL_DIR:-$HOME/.local/bin}"
+INSTALL_DIR="${GIT_COMMIT_SENTINEL_INSTALL_DIR:-$HOME/.local/bin}"
+VERSION="${GIT_COMMIT_SENTINEL_VERSION:-}"
 
 os="$(uname -s)"
 arch="$(uname -m)"
@@ -40,11 +41,11 @@ if [ "$goos" = "darwin" ] && [ "$goarch" = "amd64" ]; then
 	exit 1
 fi
 
-if [ -z "${VERSION:-}" ]; then
+if [ -z "$VERSION" ]; then
 	VERSION="$(curl --proto '=https' --tlsv1.2 -fsSL "https://api.github.com/repos/${REPO}/releases/latest" |
 		grep -m1 '"tag_name"' | sed -E 's/.*"tag_name": *"([^"]+)".*/\1/')"
 fi
-if [ -z "${VERSION:-}" ]; then
+if [ -z "$VERSION" ]; then
 	echo "error: could not resolve the latest release version" >&2
 	exit 1
 fi
