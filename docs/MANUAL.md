@@ -8,6 +8,10 @@ Commits](https://www.conventionalcommits.org/) as a git `commit-msg` hook.
 No Go toolchain needed — these scripts download the right release binary,
 verify its checksum, and put it on `PATH` (no `sudo`/admin required).
 
+Supported: macOS on Apple Silicon, Linux (x86-64 and arm64), Windows x64.
+Intel Macs and Windows on ARM are **not supported** — the scripts stop
+with an error there.
+
 **macOS / Linux:**
 
 ```sh
@@ -23,6 +27,14 @@ irm https://raw.githubusercontent.com/blue-noah/git-commit-sentinel/main/scripts
 Installs the latest release to `~/.local/bin` (macOS/Linux) or
 `%USERPROFILE%\bin` (Windows). Safe to re-run — won't duplicate a `PATH`
 entry that's already there.
+
+The `PATH` change reaches **new** terminals only:
+
+- **macOS / Linux**: open a new terminal before running
+  `git-commit-sentinel` — or reload the shell file the installer names,
+  e.g. `source ~/.zshrc`.
+- **Windows**: the PowerShell window you installed from is updated right
+  away; other open terminals and IDEs need a restart.
 
 To pick a specific release or install location, set
 `GIT_COMMIT_SENTINEL_VERSION` and/or `GIT_COMMIT_SENTINEL_INSTALL_DIR`. On
@@ -49,7 +61,8 @@ pick `-darwin-arm64`, `-linux-amd64`, `-linux-arm64` or
 `shasum -a 256 -c SHA256SUMS.txt` (macOS) or `sha256sum -c SHA256SUMS.txt`
 (Linux).
 
-With a Go toolchain instead:
+With a Go toolchain instead, from a clone of this repository (the module
+path isn't `github.com/...`, so `go install ...@latest` doesn't work):
 
 ```sh
 go install ./cmd/git-commit-sentinel
@@ -133,6 +146,43 @@ description-period=error`.
 Default types: `feat fix docs style refactor perf test build ci chore
 revert`.
 
+## Uninstall
+
+1. **Global hook** — check that `core.hooksPath` points to
+   git-commit-sentinel's directory, then unset it and remove the directory:
+
+   ```sh
+   git config --global core.hooksPath   # expect .../git-commit-sentinel/hooks
+   git config --global --unset core.hooksPath
+   rm -rf ~/.config/git-commit-sentinel   # $XDG_CONFIG_HOME/git-commit-sentinel if set
+   ```
+
+   On Windows the directory is `%USERPROFILE%\.config\git-commit-sentinel`.
+
+2. **Per-repository hooks** — in each repository set up with
+   `-scope local`, delete `.git/hooks/commit-msg`.
+
+3. **Configuration** — if you set any `commitsentinel.*` keys (rule levels
+   live in a section of their own, so remove both; git reports "no such
+   section" for one you never set):
+
+   ```sh
+   git config --global --remove-section commitsentinel
+   git config --global --remove-section commitsentinel.rules
+   ```
+
+   Run the same without `--global` inside repositories with local settings.
+
+4. **Binary** — delete `~/.local/bin/git-commit-sentinel` (macOS/Linux) or
+   `%USERPROFILE%\bin\git-commit-sentinel.exe` (Windows), or wherever
+   `GIT_COMMIT_SENTINEL_INSTALL_DIR` pointed.
+
+5. **`PATH`** — only if nothing else lives in that directory: remove the
+   line the installer added to your shell file (`~/.zshrc`, `~/.bashrc`,
+   `~/.bash_profile`, `~/.profile` or fish's `config.fish`), or on Windows
+   the entry in the user `PATH` (Settings → System → About → Advanced
+   system settings → Environment Variables).
+
 ## Troubleshooting
 
 | Symptom | Fix |
@@ -143,4 +193,6 @@ revert`.
 | `setup`: "a hook already exists ... not created by git-commit-sentinel" | Another tool owns that hook. Use `-force` only if replacing it is intended. |
 | A repo's hook is silently ignored | Its local `core.hooksPath` may override the global one — `doctor` reports this. |
 | Disable a check | `git config --global commitsentinel.rules.<rule> off` |
+| `git-commit-sentinel: command not found` right after installing | The `PATH` change reaches new terminals only — open one (see [Install](#install)). On Windows, restart terminals and IDEs that were already open. |
+| Windows: SmartScreen or antivirus warns about the binary | The release binaries aren't code-signed. The install script verifies the SHA-256 checksum and its download isn't marked by SmartScreen. For a browser download, check it against `SHA256SUMS.txt` (`Get-FileHash <file>`), then `Unblock-File <file>`. |
 | macOS: "cannot be opened because the developer cannot be verified" | The release binaries aren't signed/notarized. Only affects binaries downloaded via a browser (Gatekeeper quarantines them); `curl`/`wget` downloads and `go install`-built binaries are unaffected. Fix: `xattr -d com.apple.quarantine ./git-commit-sentinel-*-darwin-arm64`, or right-click → Open once. |

@@ -6,19 +6,20 @@ independently configurable `off`/`warn`/`error` levels per rule.
 
 ## Install
 
-macOS / Linux:
+macOS (Apple Silicon) / Linux:
 
 ```sh
 curl --proto '=https' --tlsv1.2 -fsSL https://raw.githubusercontent.com/blue-noah/git-commit-sentinel/main/scripts/install.sh | sh
 ```
 
-Windows (PowerShell):
+Windows x64 (PowerShell):
 
 ```powershell
 irm https://raw.githubusercontent.com/blue-noah/git-commit-sentinel/main/scripts/install.ps1 | iex
 ```
 
-No Go toolchain, no `sudo`/admin required. Then: `git-commit-sentinel setup`.
+No Go toolchain, no `sudo`/admin required. Intel Macs and Windows on ARM
+are not supported. Then, in a new terminal: `git-commit-sentinel setup`.
 
 - **Usage**: [docs/MANUAL.md](docs/MANUAL.md) — install, day-to-day
   behavior, configuration, troubleshooting.
