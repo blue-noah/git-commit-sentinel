@@ -144,6 +144,25 @@ jobs:
           Write-Host $out
           if ($out -ne "git-commit-sentinel $($env:GIT_COMMIT_SENTINEL_VERSION.TrimStart('v'))") { throw "unexpected version: $out" }
 
+      # Only 5.1 downloads through ServicePointManager. With TLS 1.2
+      # disabled the installer must stop with the fix in its message, and
+      # running that fix must be enough for it to succeed.
+      - name: Without TLS 1.2, install stops and its suggested fix works
+        if: matrix.shell == 'powershell'
+        run: |
+          $ErrorActionPreference = "Continue"
+          [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls
+          try {
+            Get-Content -Raw scripts/install.ps1 | Invoke-Expression
+            throw "install.ps1 succeeded with TLS 1.2 disabled"
+          }
+          catch {
+            Write-Host $_.Exception.Message
+            if ($_.Exception.Message -notlike "*TLS 1.2 or newer*is not enabled*") { throw }
+          }
+          [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+          Get-Content -Raw scripts/install.ps1 | Invoke-Expression
+
       - name: User PATH holds the install dir once and keeps %VAR% references
         run: |
           # Same dir with a trailing backslash: must still count as present.
