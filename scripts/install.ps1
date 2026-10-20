@@ -62,7 +62,14 @@
     # systems where IE was never set up. PowerShell 7 accepts and ignores it.
     $Version = $env:GIT_COMMIT_SENTINEL_VERSION
     if (-not $Version) {
-        $release = Invoke-RestMethod -UseBasicParsing -Uri "https://api.github.com/repos/$Repo/releases/latest"
+        try {
+            $release = Invoke-RestMethod -UseBasicParsing -Uri "https://api.github.com/repos/$Repo/releases/latest"
+        }
+        catch {
+            throw ("error: could not resolve the latest release version: $($_.Exception.Message)`n" +
+                "To skip this lookup, pick a release from https://github.com/$Repo/releases`n" +
+                "and set it before running the installer again, e.g. `$env:GIT_COMMIT_SENTINEL_VERSION = `"v1.2.3`"")
+        }
         $Version = $release.tag_name
     }
     if (-not $Version) {
@@ -82,11 +89,20 @@
         $ExePath = Join-Path $Tmp $File
         $SumsPath = Join-Path $Tmp "SHA256SUMS.txt"
 
-        Invoke-WebRequest -UseBasicParsing -Uri "$BaseUrl/$File" -OutFile $ExePath
-        Invoke-WebRequest -UseBasicParsing -Uri "$BaseUrl/SHA256SUMS.txt" -OutFile $SumsPath
+        try {
+            Invoke-WebRequest -UseBasicParsing -Uri "$BaseUrl/$File" -OutFile $ExePath
+            Invoke-WebRequest -UseBasicParsing -Uri "$BaseUrl/SHA256SUMS.txt" -OutFile $SumsPath
+        }
+        catch {
+            throw "error: could not download $File from release $Version (does that release exist?): $($_.Exception.Message)"
+        }
 
         Write-Host "==> verifying checksum"
-        $expected = (Select-String -Path $SumsPath -Pattern ([Regex]::Escape($File))).Line.Split(" ")[0]
+        $entry = Select-String -Path $SumsPath -Pattern ([Regex]::Escape($File)) | Select-Object -First 1
+        if (-not $entry) {
+            throw "error: SHA256SUMS.txt in release $Version has no checksum for $File"
+        }
+        $expected = $entry.Line.Split(" ")[0]
         $actual = (Get-FileHash -Path $ExePath -Algorithm SHA256).Hash.ToLower()
         if ($expected -ne $actual) {
             throw "error: checksum mismatch for $File (expected $expected, got $actual)"

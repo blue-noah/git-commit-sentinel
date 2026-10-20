@@ -163,6 +163,19 @@ jobs:
           [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
           Get-Content -Raw scripts/install.ps1 | Invoke-Expression
 
+      - name: A release that doesn't exist fails with a clear message
+        run: |
+          $ErrorActionPreference = "Continue"
+          $env:GIT_COMMIT_SENTINEL_VERSION = "v9.9.9"
+          try {
+            Get-Content -Raw scripts/install.ps1 | Invoke-Expression
+            throw "install.ps1 succeeded for a release that doesn't exist"
+          }
+          catch {
+            Write-Host $_.Exception.Message
+            if ($_.Exception.Message -notlike "*could not download*from release v9.9.9 (does that release exist?)*") { throw }
+          }
+
       - name: User PATH holds the install dir once and keeps %VAR% references
         run: |
           # Same dir with a trailing backslash: must still count as present.
