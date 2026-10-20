@@ -61,7 +61,6 @@ if [ -z "$VERSION" ]; then
 fi
 
 version_num="${VERSION#v}"
-# Release tags always carry the "v" prefix; accept VERSION with or without it.
 VERSION="v${version_num}"
 file="git-commit-sentinel-${version_num}-${goos}-${goarch}"
 base_url="https://github.com/${REPO}/releases/download/${VERSION}"

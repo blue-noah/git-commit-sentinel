@@ -106,8 +106,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      # Same as on unix. Bash avoids Out-File encoding quirks of
-      # Windows PowerShell when writing GITHUB_ENV.
+      # Bash avoids Windows PowerShell's Out-File encoding quirks on GITHUB_ENV.
       - name: Prepare
         shell: bash
         env:
@@ -144,9 +143,7 @@ jobs:
           Write-Host $out
           if ($out -ne "git-commit-sentinel $($env:GIT_COMMIT_SENTINEL_VERSION.TrimStart('v'))") { throw "unexpected version: $out" }
 
-      # Only 5.1 downloads through ServicePointManager. With TLS 1.2
-      # disabled the installer must stop with the fix in its message, and
-      # running that fix must be enough for it to succeed.
+      # Only 5.1 downloads through ServicePointManager.
       - name: Without TLS 1.2, install stops and its suggested fix works
         if: matrix.shell == 'powershell'
         run: |
@@ -204,8 +201,6 @@ jobs:
         shell: bash
         run: sh .github/scripts/install-smoke-hook.sh
 
-  # Platforms without a published build: the installers must stop before
-  # downloading anything, with a message that says so.
   unsupported-macos-intel:
     name: install refuses (macos-15-intel)
     runs-on: macos-15-intel
