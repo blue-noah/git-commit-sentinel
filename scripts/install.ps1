@@ -42,6 +42,21 @@
         }
     }
 
+    # GitHub requires TLS 1.2. Every Windows the binary runs on supports it,
+    # but Windows PowerShell 5.1 downloads through .NET's ServicePointManager,
+    # which can be pinned to a protocol list without it (0 = SystemDefault,
+    # i.e. let Windows choose). PowerShell 7 doesn't use that setting. The
+    # fix is left to the user, so the script doesn't change their session.
+    if ($PSVersionTable.PSEdition -eq "Desktop") {
+        $protocols = [Net.ServicePointManager]::SecurityProtocol
+        # 3072 = Tls12, 12288 = Tls13 (numeric: older .NET lacks the Tls13 name).
+        if ([int]$protocols -ne 0 -and -not ([int]$protocols -band (3072 -bor 12288))) {
+            throw ("error: TLS 1.2 or newer, which GitHub requires, is not enabled in this PowerShell session (enabled: $protocols).`n" +
+                "Enable it for this session, then run the installer again:`n" +
+                "  [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12")
+        }
+    }
+
     # -UseBasicParsing on every web call: without it Windows PowerShell 5.1
     # needs the Internet Explorer engine, missing on Server Core and on
     # systems where IE was never set up. PowerShell 7 accepts and ignores it.
