@@ -176,8 +176,17 @@ git config --global commitsentinel.rules.&lt;rule&gt; off|warn|error</code></pre
   <p>Checks git version, <code>PATH</code>, hook status (global + local) and effective config. <code>[FAIL]</code> means broken; <code>[WARN]</code> is worth a look, but commits are still checked. Common problems and fixes: <a href="https://github.com/blue-noah/git-commit-sentinel/blob/main/docs/MANUAL.md#troubleshooting">troubleshooting</a>.</p>
 
   <h2>Uninstall</h2>
-  <pre><code>git-commit-sentinel uninstall</code></pre>
-  <p>Removes the hook and settings <code>setup</code> created, leaving other tools' hooks alone. Then delete the binary; the <a href="https://github.com/blue-noah/git-commit-sentinel/blob/main/docs/MANUAL.md#uninstall">manual</a> has the full steps.</p>
+  <div class="snippet">
+    <span class="snippet-label">macOS / Linux</span>
+    <pre><code id="uninstall-unix">curl --proto '=https' --tlsv1.2 -fsSL https://raw.githubusercontent.com/blue-noah/git-commit-sentinel/main/scripts/uninstall.sh | sh</code></pre>
+    <button class="copy-btn" data-target="uninstall-unix" type="button">Copy</button>
+  </div>
+  <div class="snippet">
+    <span class="snippet-label">Windows (PowerShell)</span>
+    <pre><code id="uninstall-win">irm https://raw.githubusercontent.com/blue-noah/git-commit-sentinel/main/scripts/uninstall.ps1 | iex</code></pre>
+    <button class="copy-btn" data-target="uninstall-win" type="button">Copy</button>
+  </div>
+  <p>Removes the hook and settings <code>setup</code> created (leaving other tools' hooks alone), the binary, and its <code>PATH</code> entry. Repositories set up with <code>-scope local</code> keep their hook: see the <a href="https://github.com/blue-noah/git-commit-sentinel/blob/main/docs/MANUAL.md#uninstall">manual</a>.</p>
 
   <footer>
     <nav class="links">
