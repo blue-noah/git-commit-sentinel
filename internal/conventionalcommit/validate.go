@@ -4,7 +4,7 @@
 // builds the shared Context and asks every registered rule to look at it.
 package conventionalcommit
 
-import "git-commit-sentinel/internal/config"
+import "github.com/blue-noah/git-commit-sentinel/internal/config"
 
 // Finding is a single rule violation.
 type Finding struct {

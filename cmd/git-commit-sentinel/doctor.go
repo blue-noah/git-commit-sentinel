@@ -9,10 +9,10 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"git-commit-sentinel/internal/config"
-	"git-commit-sentinel/internal/conventionalcommit"
-	"git-commit-sentinel/internal/gitcli"
-	"git-commit-sentinel/internal/hookfile"
+	"github.com/blue-noah/git-commit-sentinel/internal/config"
+	"github.com/blue-noah/git-commit-sentinel/internal/conventionalcommit"
+	"github.com/blue-noah/git-commit-sentinel/internal/gitcli"
+	"github.com/blue-noah/git-commit-sentinel/internal/hookfile"
 )
 
 var lookPath = exec.LookPath

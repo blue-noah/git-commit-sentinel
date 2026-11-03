@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"git-commit-sentinel/internal/hookfile"
+	"github.com/blue-noah/git-commit-sentinel/internal/hookfile"
 )
 
 func TestCheckHookFileManaged(t *testing.T) {

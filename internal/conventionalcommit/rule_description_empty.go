@@ -1,6 +1,6 @@
 package conventionalcommit
 
-import "git-commit-sentinel/internal/config"
+import "github.com/blue-noah/git-commit-sentinel/internal/config"
 
 func init() {
 	Register(ruleSpec{

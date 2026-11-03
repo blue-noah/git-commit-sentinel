@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"git-commit-sentinel/internal/config"
-	"git-commit-sentinel/internal/hookfile"
+	"github.com/blue-noah/git-commit-sentinel/internal/config"
+	"github.com/blue-noah/git-commit-sentinel/internal/hookfile"
 )
 
 func TestOverwritePolicyFrom(t *testing.T) {

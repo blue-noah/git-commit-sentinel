@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"git-commit-sentinel/internal/gitcli"
+	"github.com/blue-noah/git-commit-sentinel/internal/gitcli"
 )
 
 // requireGit skips the test if git isn't on PATH.

@@ -8,9 +8,9 @@ import (
 	"slices"
 	"strings"
 
-	"git-commit-sentinel/internal/config"
-	"git-commit-sentinel/internal/conventionalcommit"
-	"git-commit-sentinel/internal/gitcli"
+	"github.com/blue-noah/git-commit-sentinel/internal/config"
+	"github.com/blue-noah/git-commit-sentinel/internal/conventionalcommit"
+	"github.com/blue-noah/git-commit-sentinel/internal/gitcli"
 )
 
 func runHook(args []string) int {

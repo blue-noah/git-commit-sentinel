@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"git-commit-sentinel/internal/gitcli"
+	"github.com/blue-noah/git-commit-sentinel/internal/gitcli"
 )
 
 func requireUnset(t *testing.T, scope gitcli.Scope, key string) {

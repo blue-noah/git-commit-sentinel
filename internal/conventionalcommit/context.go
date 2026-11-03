@@ -5,7 +5,7 @@ import (
 	"slices"
 	"strings"
 
-	"git-commit-sentinel/internal/config"
+	"github.com/blue-noah/git-commit-sentinel/internal/config"
 )
 
 var headerPattern = regexp.MustCompile(`^(?P<type>[a-zA-Z]+)(\((?P<scope>[^)]+)\))?(?P<breaking>!)?: (?P<description>.*)$`)
