@@ -3,7 +3,7 @@ package conventionalcommit
 import (
 	"fmt"
 
-	"git-commit-sentinel/internal/config"
+	"github.com/blue-noah/git-commit-sentinel/internal/config"
 )
 
 func init() {

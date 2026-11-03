@@ -3,7 +3,7 @@ package conventionalcommit
 import (
 	"testing"
 
-	"git-commit-sentinel/internal/config"
+	"github.com/blue-noah/git-commit-sentinel/internal/config"
 )
 
 func hasRule(findings []Finding, rule string) bool {

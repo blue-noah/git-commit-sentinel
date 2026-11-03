@@ -3,7 +3,7 @@ package conventionalcommit
 import (
 	"slices"
 
-	"git-commit-sentinel/internal/config"
+	"github.com/blue-noah/git-commit-sentinel/internal/config"
 )
 
 // Rule is one independently pluggable Conventional Commits check. New

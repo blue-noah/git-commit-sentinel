@@ -7,8 +7,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"git-commit-sentinel/internal/gitcli"
-	"git-commit-sentinel/internal/hookfile"
+	"github.com/blue-noah/git-commit-sentinel/internal/gitcli"
+	"github.com/blue-noah/git-commit-sentinel/internal/hookfile"
 )
 
 const uninstallUsage = `usage: git-commit-sentinel uninstall [flags]

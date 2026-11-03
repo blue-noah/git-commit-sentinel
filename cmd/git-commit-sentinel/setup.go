@@ -7,10 +7,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"git-commit-sentinel/internal/config"
-	"git-commit-sentinel/internal/conventionalcommit"
-	"git-commit-sentinel/internal/gitcli"
-	"git-commit-sentinel/internal/hookfile"
+	"github.com/blue-noah/git-commit-sentinel/internal/config"
+	"github.com/blue-noah/git-commit-sentinel/internal/conventionalcommit"
+	"github.com/blue-noah/git-commit-sentinel/internal/gitcli"
+	"github.com/blue-noah/git-commit-sentinel/internal/hookfile"
 )
 
 const setupUsage = `usage: git-commit-sentinel setup [flags]

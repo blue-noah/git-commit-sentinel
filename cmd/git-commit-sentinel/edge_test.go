@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"git-commit-sentinel/internal/hookfile"
+	"github.com/blue-noah/git-commit-sentinel/internal/hookfile"
 )
 
 // withFakeGit prepends a directory containing a fake `git` executable to

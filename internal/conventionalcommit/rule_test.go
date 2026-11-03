@@ -3,7 +3,7 @@ package conventionalcommit
 import (
 	"testing"
 
-	"git-commit-sentinel/internal/config"
+	"github.com/blue-noah/git-commit-sentinel/internal/config"
 )
 
 func TestEveryRuleHasSaneMetadata(t *testing.T) {
