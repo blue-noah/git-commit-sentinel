@@ -65,19 +65,19 @@ pick `-darwin-arm64`, `-linux-amd64`, `-linux-arm64` or
 `shasum -a 256 -c SHA256SUMS.txt` (macOS) or `sha256sum -c SHA256SUMS.txt`
 (Linux).
 
-With a Go toolchain instead, from a clone of this repository:
+With a Go toolchain instead:
 
 ```sh
-go install ./cmd/git-commit-sentinel
+go install github.com/blue-noah/git-commit-sentinel/cmd/git-commit-sentinel@latest
 ```
 
-The module path is `github.com/blue-noah/git-commit-sentinel`. Installing
-without a clone,
-`go install github.com/blue-noah/git-commit-sentinel/cmd/git-commit-sentinel@latest`,
-works only from the next release on: the existing tags (v0.0.1–v0.0.5)
-still carry the old module name in their `go.mod`.
+Replace `@latest` with a tag (e.g. `@v0.0.6`) to pin a version. Only
+v0.0.6 and later install this way: earlier tags carry an old module name
+in their `go.mod`. From a clone of this repository,
+`go install ./cmd/git-commit-sentinel` works too.
 
-(puts it in `$(go env GOBIN)`, or `$(go env GOPATH)/bin` if `GOBIN` is unset).
+Either way the binary goes to `$(go env GOBIN)`, or `$(go env GOPATH)/bin`
+if `GOBIN` is unset.
 
 </details>
 
