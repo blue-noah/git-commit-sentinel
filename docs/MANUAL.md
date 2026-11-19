@@ -71,10 +71,9 @@ With a Go toolchain instead:
 go install github.com/blue-noah/git-commit-sentinel/cmd/git-commit-sentinel@latest
 ```
 
-Replace `@latest` with a tag (e.g. `@v0.0.6`) to pin a version. Only
-v0.0.6 and later install this way: earlier tags carry an old module name
-in their `go.mod`. From a clone of this repository,
-`go install ./cmd/git-commit-sentinel` works too.
+Replace `@latest` with a tag (e.g. `@v0.0.6`) to pin a version. From a
+clone of this repository, `go install ./cmd/git-commit-sentinel` works
+too.
 
 Either way the binary goes to `$(go env GOBIN)`, or `$(go env GOPATH)/bin`
 if `GOBIN` is unset.
