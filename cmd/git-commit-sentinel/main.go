@@ -8,8 +8,6 @@ import (
 	"os"
 )
 
-var version = "dev"
-
 const usage = `git-commit-sentinel — a Conventional Commits git hook
 
 Usage:
@@ -53,7 +51,7 @@ func realMain(args []string) int {
 		fmt.Fprint(os.Stdout, usage)
 		return 0
 	case "-v", "--version", "version":
-		fmt.Println("git-commit-sentinel " + version)
+		fmt.Println("git-commit-sentinel " + currentVersion())
 		return 0
 	default:
 		fmt.Fprintf(os.Stderr, "git-commit-sentinel: unknown command %q\n\n", args[0])
